@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamMaster - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <!-- Sidebar / Nav -->
+    <nav class="admin-gradient text-white p-6 sticky top-0 z-50 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <i class="fa fa-user-shield text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight leading-none">Admin Console</h1>
+                <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Live Management</p>
+            </div>
+        </div>
+        <button onclick="logout()" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-bold transition">
+            <i class="fa fa-sign-out-alt mr-2"></i> Logout
+        </button>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Tests & Questions -->
+        <div class="lg:col-span-7 space-y-8">
+            
+            <!-- Create New Test Series -->
+            <section class="card p-8 shadow-sm">
+                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa fa-plus-circle text-blue-600"></i> Launch New Test Series
+                </h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Series Title</label>
+                        <input type="text" id="test-title" placeholder="e.g. JEE Mains Mock 01" class="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-500 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Price ($)</label>
+                        <input type="number" id="test-price" placeholder="99" class="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-500 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Duration (Mins)</label>
+                        <input type="number" id="test-mins" placeholder="180" class="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-500 mt-1">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Description</label>
+                        <textarea id="test-desc" placeholder="Details about this test..." class="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-blue-500 mt-1 h-24"></textarea>
+                    </div>
+                </div>
+                <button onclick="createTest()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition">
+                    Publish Test Series
+                </button>
+            </section>
+
+            <!-- Question Uploader (Dynamic) -->
+            <section id="question-manager" class="card p-8 shadow-sm hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa fa-list-check text-indigo-600"></i> Add Questions
+                    </h3>
+                    <span id="active-test-name" class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase"></span>
+                </div>
+                <div class="space-y-4">
+                    <textarea id="q-text" placeholder="Enter Question text..." class="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 ring-indigo-500"></textarea>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="opt-a" placeholder="Option A" class="p-3 rounded-xl bg-slate-50 border outline-none">
+                        <input type="text" id="opt-b" placeholder="Option B" class="p-3 rounded-xl bg-slate-50 border outline-none">
+                        <input type="text" id="opt-c" placeholder="Option C" class="p-3 rounded-xl bg-slate-50 border outline-none">
+                        <input type="text" id="opt-d" placeholder="Option D" class="p-3 rounded-xl bg-slate-50 border outline-none">
+                    </div>
+                    <select id="correct-opt" class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold text-slate-600">
+                        <option value="">Select Correct Answer</option>
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                    <button onclick="addQuestion()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition">Save Question</button>
+                </div>
+            </section>
+
+            <!-- List of Existing Tests -->
+            <section class="card p-8 shadow-sm">
+                <h3 class="text-xl font-black text-slate-800 mb-6">Manage Live Tests</h3>
+                <div id="active-tests-list" class="space-y-4">
+                    <!-- Loaded from Firestore -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Student Management -->
+        <div class="lg:col-span-5">
+            <section class="card p-8 shadow-sm h-[85vh] flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-black text-slate-800">Live Students</h3>
+                    <span id="student-count" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">0</span>
+                </div>
+                <div id="students-list" class="space-y-4 overflow-y-auto flex-1">
+                    <!-- Live Users Here -->
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
+            authDomain: "test-series-e94cf.firebaseapp.com",
+            projectId: "test-series-e94cf",
+            storageBucket: "test-series-e94cf.firebasestorage.app",
+            messagingSenderId: "1089405186531",
+            appId: "1:1089405186531:web:5c47280e47e5373bf4f0d6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = "exam-master-v1";
+
+        let selectedTestId = null;
+
+        // --- Auth Guard ---
+        onAuthStateChanged(auth, (user) => {
+            const ADMIN_EMAIL = "anshupsnlact@gmail.com"; // UPDATE THIS
+            if (!user || user.email !== ADMIN_EMAIL) {
+                window.location.href = "index.html";
+            } else {
+                initAdminData();
+            }
+        });
+
+        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
+
+        // --- Core Functions ---
+
+        function initAdminData() {
+            // 1. Live Tests List
+            onSnapshot(collection(db, "tests"), (snapshot) => {
+                const list = document.getElementById('active-tests-list');
+                list.innerHTML = "";
+                snapshot.forEach(d => {
+                    const t = d.data();
+                    list.innerHTML += `
+                        <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
+                            <div>
+                                <h5 class="font-bold text-slate-800">${t.title}</h5>
+                                <p class="text-[10px] font-bold text-slate-400">$${t.price} • ${t.duration} Mins</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openQuestionManager('${d.id}', '${t.title}')" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"><i class="fa fa-plus"></i></button>
+                                <button onclick="deleteTest('${d.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i class="fa fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // 2. Live Students List (Auto-registers users on login)
+            // Note: home.html must save user profile to /users/ collection for this to work live
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'students'), (snapshot) => {
+                const list = document.getElementById('students-list');
+                document.getElementById('student-count').innerText = snapshot.size;
+                list.innerHTML = "";
+                snapshot.forEach(d => {
+                    const s = d.data();
+                    const statusClass = s.disabled ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600';
+                    list.innerHTML += `
+                        <div class="p-4 bg-white rounded-2xl border border-slate-100 flex items-center gap-4 shadow-sm">
+                            <img src="${s.photo}" class="w-10 h-10 rounded-full">
+                            <div class="flex-1">
+                                <h5 class="font-bold text-slate-800 text-sm leading-none">${s.name}</h5>
+                                <p class="text-[10px] text-slate-400 mt-1">${s.email}</p>
+                                <span class="${statusClass} px-2 py-0.5 rounded-full text-[8px] font-black uppercase mt-2 inline-block">
+                                    ${s.disabled ? 'Disabled' : 'Active'}
+                                </span>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="toggleUserStatus('${d.id}', ${s.disabled})" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"><i class="fa fa-ban text-xs"></i></button>
+                                <button onclick="deleteUser('${d.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-400 hover:bg-red-100"><i class="fa fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // --- Action Handlers ---
+
+        window.createTest = async () => {
+            const title = document.getElementById('test-title').value;
+            const price = document.getElementById('test-price').value;
+            const mins = document.getElementById('test-mins').value;
+            const desc = document.getElementById('test-desc').value;
+
+            if(!title || !price) return alert("Fill all details");
+
+            await addDoc(collection(db, "tests"), {
+                title, price, duration: mins, description: desc, createdAt: serverTimestamp()
+            });
+            alert("Series Created!");
+            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
+        };
+
+        window.deleteTest = async (id) => {
+            if(confirm("Delete this test series and all its questions?")) {
+                await deleteDoc(doc(db, "tests", id));
+            }
+        };
+
+        window.openQuestionManager = (id, name) => {
+            selectedTestId = id;
+            document.getElementById('active-test-name').innerText = name;
+            document.getElementById('question-manager').classList.remove('hidden');
+            document.getElementById('question-manager').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.addQuestion = async () => {
+            if(!selectedTestId) return;
+            const q = document.getElementById('q-text').value;
+            const a = document.getElementById('opt-a').value;
+            const b = document.getElementById('opt-b').value;
+            const c = document.getElementById('opt-c').value;
+            const d = document.getElementById('opt-d').value;
+            const ans = document.getElementById('correct-opt').value;
+
+            if(!q || !ans) return alert("Question and Correct Answer are required!");
+
+            await addDoc(collection(db, "tests", selectedTestId, "questions"), {
+                question: q, options: {A: a, B: b, C: c, D: d}, correct: ans, createdAt: serverTimestamp()
+            });
+
+            alert("Question Saved!");
+            document.querySelectorAll('#question-manager input, #question-manager textarea').forEach(i => i.value = "");
+        };
+
+        window.toggleUserStatus = async (uid, currentDisabled) => {
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', uid);
+            await updateDoc(userRef, { disabled: !currentDisabled });
+        };
+
+        window.deleteUser = async (uid) => {
+            if(confirm("Delete this student permanently?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid));
+            }
+        };
+
+    </script>
+</body>
+      </html>
