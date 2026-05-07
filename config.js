@@ -1,4 +1,4 @@
-// Is file ko secure rakhein. Ye aapki "Chabi" (Keys) hai.
+// Aapki provided Firebase configuration aur Admin Email
 export const firebaseConfig = {
   apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
   authDomain: "test-series-e94cf.firebaseapp.com",
@@ -9,5 +9,5 @@ export const firebaseConfig = {
   measurementId: "G-C25TJCVEJK"
 };
 
-// Aapka Admin Email yahan set karein
+// Yahan apni woh email id likhein jise aap admin banana chahte hain
 export const ADMIN_EMAIL = "anshupsnlact@gmail.com"; 
