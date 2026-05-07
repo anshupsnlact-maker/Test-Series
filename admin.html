@@ -3,298 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Super Admin Dashboard</title>
+    <title>Admin Panel - ExamMaster</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .active-tab { background: #0f172a; color: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-        .student-list { display: flex; flex-direction: column; gap: 0.75rem; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        .glass-header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .user-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
     </style>
 </head>
-<body class="p-4 md:p-10 pb-20">
+<body class="min-h-screen">
 
-    <!-- MODAL: Create Test Series with File Upload -->
-    <div id="create-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl p-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black text-slate-800 italic">Create New Test Series</h2>
-                <button onclick="closeModal('create-modal')" class="text-slate-300 hover:text-slate-600 transition"><i class="fa fa-times-circle text-2xl"></i></button>
+    <!-- Navigation Header -->
+    <header class="glass-header sticky top-0 z-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
+                <i class="fa fa-graduation-cap text-white text-xl"></i>
             </div>
-            
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="space-y-5">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Series Details</label>
-                    <input type="text" id="s-title" placeholder="Series Name" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
-                    <textarea id="s-desc" placeholder="Series Description..." class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold h-24"></textarea>
-                    <input type="number" id="s-price" placeholder="Price (INR)" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
-                </div>
-                <div class="space-y-5">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">File & Validity</label>
-                    <input type="number" id="s-validity" placeholder="Validity (Days)" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
-                    
-                    <!-- CSV File Input -->
-                    <div class="relative group">
-                        <label for="csv-file" class="flex flex-col items-center justify-center w-full p-6 bg-blue-50 text-blue-600 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer group-hover:bg-blue-100 transition font-bold">
-                            <i class="fa fa-file-csv text-2xl mb-2"></i>
-                            <span id="file-name-label" class="text-[10px] uppercase">Upload .csv File</span>
-                        </label>
-                        <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="updateFileLabel()">
-                    </div>
-                    
-                    <input type="datetime-local" id="s-live-time" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-500">
-                </div>
-            </div>
+            <h1 class="text-xl font-bold text-slate-800">Admin Panel</h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <a href="upload.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-100 transition-all">
+                <i class="fa fa-plus"></i> Upload Test Series
+            </a>
+            <button id="logout-btn" class="text-slate-500 hover:text-red-600 font-bold text-sm">Logout</button>
+        </div>
+    </header>
 
-            <button id="publish-btn" onclick="publishSeries()" class="w-full mt-10 bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl hover:bg-blue-700 transition transform active:scale-95">
-                Upload & Publish Now
+    <main class="max-w-7xl mx-auto p-6">
+        <!-- Stats Section -->
+        <div class="mb-10">
+            <h2 class="text-2xl font-extrabold text-slate-800">Registered Students</h2>
+            <p class="text-slate-500">Manage and view user purchase history</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-slate-500 font-medium">Fetching secure data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-box" class="hidden bg-red-50 border border-red-100 p-6 rounded-2xl text-center">
+            <i class="fa fa-exclamation-triangle text-red-500 text-3xl mb-3"></i>
+            <h3 class="text-red-800 font-bold">Access Denied or Error</h3>
+            <p id="error-msg" class="text-red-600 text-sm"></p>
+        </div>
+
+        <!-- Users Grid -->
+        <div id="user-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- User cards will be injected here -->
+        </div>
+    </main>
+
+    <!-- Details Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[100] backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-[2rem] p-8 shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-800">
+                <i class="fa fa-times text-xl"></i>
             </button>
-        </div>
-    </div>
-
-    <!-- MODAL: Student Details View -->
-    <div id="user-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl p-10">
-            <div id="user-modal-content" class="space-y-6 text-center">
-                <p class="text-slate-400 font-bold italic">Fetching student data...</p>
-            </div>
-            <button onclick="closeModal('user-modal')" class="w-full mt-8 py-4 bg-slate-100 rounded-2xl font-black text-slate-500 hover:bg-slate-200 transition">Close Panel</button>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 bg-slate-900 rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-2xl">
-                    <i class="fa fa-fingerprint"></i>
-                </div>
-                <div>
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">Admin Console</h1>
-                    <p id="auth-status" class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1 italic">Securing Connection...</p>
-                </div>
-            </div>
-            <div class="flex gap-4 w-full md:w-auto">
-                <button onclick="openModal('create-modal')" class="flex-1 md:flex-none bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition active:scale-95">
-                    <i class="fa fa-plus-circle mr-2"></i> New Test Series
-                </button>
-                <button onclick="logout()" class="w-16 h-16 bg-slate-50 rounded-2xl text-red-500 hover:bg-red-50 transition flex items-center justify-center text-xl">
-                    <i class="fa fa-power-off"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- View Controls & Tabs -->
-        <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
-            <div class="flex gap-2 p-1.5 bg-slate-200/50 rounded-2xl w-fit">
-                <button onclick="switchTab('users')" id="tab-users-btn" class="active-tab px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">Registered Students</button>
-                <button onclick="switchTab('series')" id="tab-series-btn" class="px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400">Live Series</button>
-            </div>
-
-            <div id="view-controls" class="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
-                <button onclick="changeView('grid')" id="view-grid-btn" class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center transition"><i class="fa fa-th-large"></i></button>
-                <button onclick="changeView('list')" id="view-list-btn" class="w-10 h-10 rounded-xl bg-white text-slate-400 flex items-center justify-center transition"><i class="fa fa-list"></i></button>
+            <div id="modal-content">
+                <!-- Data will be dynamic -->
             </div>
         </div>
-
-        <!-- Registered Students Section -->
-        <section id="section-users">
-            <div id="students-container" class="student-grid"></div>
-        </section>
-
-        <!-- Published Series Section -->
-        <section id="section-series" class="hidden">
-            <div id="series-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-        </section>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Importing your secure config
+        import { firebaseConfig, ADMIN_EMAIL } from './config.js';
 
-        // Environment Config (No keys hardcoded)
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
-        let currentView = 'grid';
+        const userGrid = document.getElementById('user-grid');
+        const loading = document.getElementById('loading');
+        const errorBox = document.getElementById('error-box');
+        const errorMsg = document.getElementById('error-msg');
+        const userModal = document.getElementById('user-modal');
+        const modalContent = document.getElementById('modal-content');
 
-        // Secure Auth Logic
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+        // Global state for users
+        let allUsers = [];
+
+        // Check Auth and Admin Access
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "index.html"; // Redirect to login if not logged in
+                return;
             }
-        };
-        initAuth();
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('auth-status').innerText = `Authorized Access: ${user.uid}`;
-                loadStudents();
-                loadSeries();
+            if (user.email !== ADMIN_EMAIL) {
+                loading.classList.add('hidden');
+                errorBox.classList.remove('hidden');
+                errorMsg.innerText = "Authorized access only. Your account (" + user.email + ") is not an admin.";
+                // Logout unauthorized users after 3 seconds
+                setTimeout(() => signOut(auth), 3000);
+                return;
             }
+
+            // If Admin, fetch data
+            fetchUsersData();
         });
 
-        // UI Functions
-        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
-        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-        window.logout = () => signOut(auth).then(() => location.reload());
-
-        window.updateFileLabel = () => {
-            const file = document.getElementById('csv-file').files[0];
-            const label = document.getElementById('file-name-label');
-            if (file) {
-                label.innerText = file.name;
-                label.parentElement.className = "flex flex-col items-center justify-center w-full p-6 bg-green-50 text-green-600 border-2 border-dashed border-green-200 rounded-2xl cursor-pointer group-hover:bg-green-100 transition font-bold";
-            }
-        };
-
-        window.switchTab = (tab) => {
-            document.getElementById('section-users').classList.toggle('hidden', tab !== 'users');
-            document.getElementById('section-series').classList.toggle('hidden', tab !== 'series');
-            document.getElementById('tab-users-btn').className = tab === 'users' ? 'active-tab px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all' : 'px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400';
-            document.getElementById('tab-series-btn').className = tab === 'series' ? 'active-tab px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all' : 'px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400';
-            document.getElementById('view-controls').classList.toggle('hidden', tab !== 'users');
-        };
-
-        window.changeView = (view) => {
-            currentView = view;
-            const container = document.getElementById('students-container');
-            container.className = view === 'grid' ? 'student-grid' : 'student-list';
-            document.getElementById('view-grid-btn').className = view === 'grid' ? 'w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center' : 'w-10 h-10 rounded-xl bg-white text-slate-400 flex items-center justify-center';
-            document.getElementById('view-list-btn').className = view === 'list' ? 'w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center' : 'w-10 h-10 rounded-xl bg-white text-slate-400 flex items-center justify-center';
-            loadStudents();
-        };
-
-        // STUDENT MANAGEMENT
-        function loadStudents() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'students'), (snap) => {
-                const container = document.getElementById('students-container');
-                container.innerHTML = "";
-                snap.forEach(docSnap => {
-                    const s = docSnap.data();
-                    const html = currentView === 'grid' ? `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                            <img src="${s.photoURL || 'https://via.placeholder.com/150'}" class="w-20 h-20 rounded-full mb-4 border-4 border-slate-50">
-                            <h3 class="text-lg font-black text-slate-800">${s.displayName || 'Unnamed User'}</h3>
-                            <p class="text-xs font-bold text-slate-400 mt-1">${s.email}</p>
-                            <div class="flex gap-2 w-full mt-6">
-                                <button onclick="viewStudentDetails('${docSnap.id}')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Details</button>
-                                <button onclick="toggleUserStatus('${docSnap.id}', ${s.disabled})" class="px-4 py-3 bg-slate-50 rounded-xl ${s.disabled ? 'text-green-500' : 'text-red-400'}"><i class="fa ${s.disabled ? 'fa-unlock' : 'fa-ban'}"></i></button>
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <img src="${s.photoURL || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded-full">
-                                <div>
-                                    <h3 class="font-black text-slate-800 text-sm">${s.displayName}</h3>
-                                    <p class="text-[10px] font-bold text-slate-400">${s.email}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="viewStudentDetails('${docSnap.id}')" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase">View Details</button>
-                                <button onclick="toggleUserStatus('${docSnap.id}', ${s.disabled})" class="w-10 h-10 bg-slate-50 rounded-xl ${s.disabled ? 'text-green-500' : 'text-red-400'}"><i class="fa ${s.disabled ? 'fa-unlock' : 'fa-ban'}"></i></button>
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += html;
+        async function fetchUsersData() {
+            try {
+                // Rule: Fetching all users from your public data or users collection
+                // Replace 'users' with your actual collection name where student data is stored
+                const querySnapshot = await getDocs(collection(db, 'users'));
+                allUsers = [];
+                
+                querySnapshot.forEach((doc) => {
+                    allUsers.push({ id: doc.id, ...doc.data() });
                 });
-            });
+
+                renderUsers();
+            } catch (err) {
+                console.error(err);
+                loading.classList.add('hidden');
+                errorBox.classList.remove('hidden');
+                errorMsg.innerText = "Error loading database: " + err.message;
+            }
         }
 
-        window.toggleUserStatus = async (uid, isBlocked) => {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid), { disabled: !isBlocked });
-        };
+        function renderUsers() {
+            loading.classList.add('hidden');
+            userGrid.classList.remove('hidden');
+            userGrid.innerHTML = '';
 
-        window.viewStudentDetails = (uid) => {
-            openModal('user-modal');
-            const content = document.getElementById('user-modal-content');
-            // Fetch scores and purchases logic same as before...
-            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'scores'), (snap) => {
-                let scores = snap.docs.map(d => `<div class="p-4 bg-slate-50 rounded-xl flex justify-between"><span>${d.data().testName}</span><b>${d.data().score}%</b></div>`).join('');
-                content.innerHTML = `
-                    <h2 class="text-2xl font-black mb-6">Student Analytics</h2>
-                    <div class="space-y-3 text-left max-h-[300px] overflow-y-auto custom-scrollbar">
-                        ${scores || '<p class="text-center text-slate-400 italic">No tests attempted yet.</p>'}
+            if (allUsers.length === 0) {
+                userGrid.innerHTML = '<p class="text-slate-400 col-span-full text-center py-10">No students registered yet.</p>';
+                return;
+            }
+
+            allUsers.forEach((user, index) => {
+                const card = document.createElement('div');
+                card.className = "user-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer";
+                card.onclick = () => showUserDetails(index);
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            ${(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 truncate w-40">${user.displayName || 'Unnamed User'}</h3>
+                            <p class="text-xs text-slate-500">${user.email}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-50">
+                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-400">Series Owned</span>
+                        <span class="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+                            ${user.purchasedSeries ? user.purchasedSeries.length : 0} Items
+                        </span>
                     </div>
                 `;
-            });
-        };
-
-        // TEST SERIES MANAGEMENT
-        window.publishSeries = async () => {
-            const btn = document.getElementById('publish-btn');
-            const file = document.getElementById('csv-file').files[0];
-            const title = document.getElementById('s-title').value;
-
-            if(!file || !title) return alert("Pehle Title aur CSV file select karein!");
-
-            try {
-                btn.disabled = true;
-                btn.innerText = "Uploading CSV to Storage...";
-
-                // 1. Upload to Storage (Path: artifacts/appId/public/data/csv_files/...)
-                const fileRef = ref(storage, `artifacts/${appId}/public/data/csv_files/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(fileRef, file);
-                const fileUrl = await getDownloadURL(snapshot.ref);
-
-                // 2. Save Data to Firestore
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tests'), {
-                    title: title,
-                    desc: document.getElementById('s-desc').value,
-                    price: document.getElementById('s-price').value,
-                    validity: document.getElementById('s-validity').value,
-                    sheetLink: fileUrl,
-                    liveAt: document.getElementById('s-live-time').value || serverTimestamp(),
-                    createdAt: serverTimestamp()
-                });
-
-                alert("Test Series Live Ho Chuki Hai!");
-                closeModal('create-modal');
-                location.reload();
-            } catch (err) {
-                alert("Upload failed: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "Upload & Publish Now";
-            }
-        };
-
-        function loadSeries() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tests'), (snap) => {
-                const container = document.getElementById('series-container');
-                container.innerHTML = "";
-                snap.forEach(d => {
-                    const data = d.data();
-                    container.innerHTML += `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex justify-between items-center shadow-sm">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-black text-slate-800">${data.title}</h3>
-                                <div class="flex gap-4 items-center mt-3">
-                                    <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">₹${data.price}</span>
-                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${data.validity} Days Validity</span>
-                                </div>
-                            </div>
-                            <button onclick="deleteSeries('${d.id}')" class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition"><i class="fa fa-trash"></i></button>
-                        </div>
-                    `;
-                });
+                userGrid.appendChild(card);
             });
         }
 
-        window.deleteSeries = async (id) => {
-            if(confirm("Confirm Delete Series?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tests', id));
+        window.showUserDetails = (index) => {
+            const user = allUsers[index];
+            const seriesList = user.purchasedSeries || [];
+            
+            modalContent.innerHTML = `
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-4 text-3xl shadow-xl">
+                        ${(user.displayName || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-800">${user.displayName || 'User Profile'}</h2>
+                    <p class="text-slate-500 text-sm">${user.email}</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa fa-shopping-cart text-blue-600"></i> Purchased Test Series
+                    </h4>
+                    <div class="max-h-60 overflow-y-auto pr-2 space-y-2">
+                        ${seriesList.length > 0 ? seriesList.map(item => `
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-slate-800 text-sm">${item.name || 'Test Series'}</p>
+                                    <p class="text-[10px] text-slate-400">UID: ${item.id || 'N/A'}</p>
+                                </div>
+                                <span class="text-blue-600 font-bold text-xs">Active</span>
+                            </div>
+                        `).join('') : '<p class="text-slate-400 text-sm italic">No series purchased yet.</p>'}
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-blue-50 rounded-2xl">
+                        <p class="text-[10px] text-blue-400 uppercase font-bold">Total Spent</p>
+                        <p class="text-lg font-black text-blue-700">₹${user.totalSpent || 0}</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-2xl">
+                        <p class="text-[10px] text-purple-400 uppercase font-bold">Last Active</p>
+                        <p class="text-sm font-black text-purple-700">${user.lastLogin || 'Today'}</p>
+                    </div>
+                </div>
+            `;
+            
+            userModal.classList.remove('hidden');
+            userModal.classList.add('flex');
+        };
+
+        window.closeModal = () => {
+            userModal.classList.add('hidden');
+            userModal.classList.remove('flex');
+        };
+
+        // Logout functionality
+        document.getElementById('logout-btn').onclick = () => {
+            signOut(auth).then(() => window.location.href = "index.html");
+        };
+
+        // Close modal on outside click
+        window.onclick = (event) => {
+            if (event.target == userModal) closeModal();
         };
     </script>
 </body>
