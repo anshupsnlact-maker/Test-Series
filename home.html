@@ -1,0 +1,238 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamMaster - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .glass-effect { backdrop-filter: blur(15px); background: rgba(255, 255, 255, 0.85); }
+        .active-nav { color: #2563eb; }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] pb-24">
+
+    <!-- Top Sticky Navigation -->
+    <header class="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <img id="user-avatar" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://via.placeholder.com/100">
+            <div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight">Welcome,</p>
+                <h3 id="user-display-name" class="font-black text-slate-800 leading-none">Student</h3>
+            </div>
+        </div>
+        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition">
+            <i class="fa fa-sign-out-alt text-xl"></i>
+        </button>
+    </header>
+
+    <main class="p-5 max-w-lg mx-auto">
+        <!-- Quick Stats / Results Buttons -->
+        <div class="grid grid-cols-2 gap-4 mb-8 text-center">
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2">
+                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
+                    <i class="fa fa-chart-bar"></i>
+                </div>
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">My Results</span>
+            </div>
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2">
+                <div class="w-10 h-10 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+                    <i class="fa fa-clock"></i>
+                </div>
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Expired</span>
+            </div>
+        </div>
+
+        <!-- Section: My Purchases (Mera Test Box) -->
+        <div class="mb-10">
+            <h3 class="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
+                <i class="fa fa-briefcase text-blue-600"></i> My Test Library
+            </h3>
+            <div id="purchased-list" class="space-y-4">
+                <!-- Fallback empty state -->
+                <div class="p-10 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+                    <p class="text-slate-400 text-sm font-medium italic">No tests purchased yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Control Section (Visible only to defined Admin Email) -->
+        <div id="admin-section" class="hidden mb-10 p-6 bg-indigo-50 rounded-[2.5rem] border-2 border-dashed border-indigo-200">
+            <h4 class="font-black text-indigo-800 mb-4 flex items-center gap-2">
+                <i class="fa fa-shield-alt"></i> Admin: Create Test
+            </h4>
+            <div class="space-y-3">
+                <input type="text" id="t-title" placeholder="Test Series Name" class="w-full p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
+                <div class="flex gap-2">
+                    <input type="number" id="t-price" placeholder="Price ($)" class="w-1/2 p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
+                    <input type="number" id="t-mins" placeholder="Minutes" class="w-1/2 p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
+                </div>
+                <button onclick="createNewTest()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition">Add to Store</button>
+            </div>
+        </div>
+
+        <!-- Section: Shop (Available Series) -->
+        <div>
+            <h3 class="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
+                <i class="fa fa-store text-emerald-500"></i> Available Series
+            </h3>
+            <div id="shop-list" class="space-y-4">
+                <!-- Loaded from Firestore -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom App Navigation -->
+    <nav class="fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-8 z-50">
+        <button class="active-nav"><i class="fa fa-home text-xl"></i></button>
+        <button class="text-slate-500 hover:text-white"><i class="fa fa-book text-xl"></i></button>
+        <button class="text-slate-500 hover:text-white"><i class="fa fa-medal text-xl"></i></button>
+        <button class="text-slate-500 hover:text-white"><i class="fa fa-user-circle text-xl"></i></button>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
+            authDomain: "test-series-e94cf.firebaseapp.com",
+            projectId: "test-series-e94cf",
+            storageBucket: "test-series-e94cf.firebasestorage.app",
+            messagingSenderId: "1089405186531",
+            appId: "1:1089405186531:web:5c47280e47e5373bf4f0d6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = "exam-master-v1";
+
+        // Configuration: Define your Admin Email here
+        const ADMIN_EMAIL = "your-admin-email@gmail.com"; 
+
+        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
+
+        // Identity Verification
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('user-avatar').src = user.photoURL;
+                document.getElementById('user-display-name').innerText = user.displayName.split(' ')[0];
+                
+                // Show Admin Controls if the email matches
+                if(user.email === ADMIN_EMAIL) {
+                    document.getElementById('admin-section').classList.remove('hidden');
+                }
+                
+                initializeDataStreams(user.uid);
+            }
+        });
+
+        // Real-time Data Sync
+        function initializeDataStreams(uid) {
+            // Stream 1: Available Tests in Shop
+            onSnapshot(collection(db, "tests"), (snapshot) => {
+                const shopContainer = document.getElementById('shop-list');
+                shopContainer.innerHTML = "";
+                snapshot.forEach(snapDoc => {
+                    const data = snapDoc.data();
+                    shopContainer.innerHTML += `
+                        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${data.title}</h4>
+                                <div class="flex gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    <span>${data.duration || '60'} Mins</span>
+                                    <span>•</span>
+                                    <span>Practice Mock</span>
+                                </div>
+                                <p class="text-blue-600 font-black text-xl mt-1">$${data.price}</p>
+                            </div>
+                            <button onclick="handlePurchase('${snapDoc.id}', '${data.title}', '${data.price}')" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition">Enroll</button>
+                        </div>
+                    `;
+                });
+            });
+
+            // Stream 2: User's Purchased Library
+            const purchaseRef = collection(db, 'artifacts', appId, 'users', uid, 'purchases');
+            onSnapshot(purchaseRef, (snapshot) => {
+                const libraryContainer = document.getElementById('purchased-list');
+                if(snapshot.empty) return;
+                
+                libraryContainer.innerHTML = "";
+                snapshot.forEach(snapDoc => {
+                    const data = snapDoc.data();
+                    libraryContainer.innerHTML += `
+                        <div class="bg-gradient-to-tr from-blue-700 to-indigo-800 p-6 rounded-[2rem] shadow-xl text-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-black text-xl">${data.title}</h4>
+                                    <p class="text-blue-200 text-[10px] font-bold uppercase tracking-widest mt-1">Lifetime Access</p>
+                                </div>
+                                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                    <i class="fa fa-check text-blue-100"></i>
+                                </div>
+                            </div>
+                            <button class="w-full bg-white text-blue-700 font-black py-4 rounded-2xl shadow-xl hover:bg-blue-50 active:scale-95 transition">
+                                <i class="fa fa-play-circle mr-2"></i> Start Attempt
+                            </button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // Logic: Create New Test (Admin Only)
+        window.createNewTest = async () => {
+            const title = document.getElementById('t-title').value;
+            const price = document.getElementById('t-price').value;
+            const mins = document.getElementById('t-mins').value;
+            
+            if(!title || !price) return alert("Please fill in all test details.");
+            
+            try {
+                await addDoc(collection(db, "tests"), {
+                    title, 
+                    price, 
+                    duration: mins || "60", 
+                    createdAt: serverTimestamp()
+                });
+                document.getElementById('t-title').value = "";
+                document.getElementById('t-price').value = "";
+                alert("New test series added successfully!");
+            } catch (err) {
+                console.error("Save Error:", err);
+            }
+        };
+
+        // Logic: Process Purchase
+        window.handlePurchase = async (id, title, price) => {
+            const user = auth.currentUser;
+            if(!user) return;
+            
+            const purchaseDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'purchases', id);
+            try {
+                await setDoc(purchaseDoc, {
+                    title, 
+                    price, 
+                    purchasedAt: serverTimestamp(),
+                    status: 'active'
+                });
+                alert(title + " has been added to your library!");
+            } catch (err) {
+                console.error("Purchase Error:", err);
+            }
+        };
+
+    </script>
+</body>
+</html>
+
+```
