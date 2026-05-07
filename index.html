@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +11,6 @@
 <body class="bg-slate-50 flex items-center justify-center min-h-screen p-6 font-sans">
 
     <div class="w-full max-w-sm bg-white p-10 rounded-[3rem] shadow-2xl text-center border border-slate-100">
-        <!-- Brand Logo -->
         <div class="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-700 rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-blue-200 rotate-6">
             <i class="fa fa-graduation-cap text-white text-5xl"></i>
         </div>
@@ -18,20 +18,26 @@
         <h1 class="text-3xl font-black text-slate-800 mb-3">ExamMaster</h1>
         <p class="text-slate-400 mb-12 text-sm font-medium">Empowering your preparation with <br>premium test series.</p>
         
-        <!-- Google Sign-In Button -->
+        <!-- Login Button -->
         <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-2xl">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png" class="w-6 h-6" alt="Google">
             Sign In with Google
         </button>
         
-        <p class="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Secure Authentication</p>
+        <div id="status-msg" class="mt-4 text-xs font-bold text-red-500 hidden"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            onAuthStateChanged, 
+            setPersistence, 
+            browserLocalPersistence 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
             authDomain: "test-series-e94cf.firebaseapp.com",
@@ -45,21 +51,46 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // Login Handler
-        document.getElementById('login-btn').onclick = async () => {
+        const loginBtn = document.getElementById('login-btn');
+        const statusMsg = document.getElementById('status-msg');
+
+        // Helper to show errors
+        const showError = (msg) => {
+            statusMsg.innerText = msg;
+            statusMsg.classList.remove('hidden');
+        };
+
+        // Login Logic
+        loginBtn.onclick = async () => {
+            loginBtn.disabled = true;
+            loginBtn.innerText = "Connecting...";
+            
             try {
-                await signInWithPopup(auth, provider);
+                // Step 1: Set persistence so user stays logged in
+                await setPersistence(auth, browserLocalPersistence);
+                
+                // Step 2: Sign in
+                const result = await signInWithPopup(auth, provider);
+                console.log("Logged in user:", result.user);
+                
+                // Redirect will be handled by onAuthStateChanged
             } catch (err) {
-                console.error("Authentication Error:", err);
+                console.error("Login Error:", err);
+                showError("Login Failed: " + err.message);
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png" class="w-6 h-6"> Sign In with Google`;
             }
         };
 
-        // Redirect logic: If authenticated, go to home.html
+        // Auth Observer
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                console.log("User detected, redirecting...");
                 window.location.href = "home.html";
             }
         });
     </script>
 </body>
 </html>
+
+```
