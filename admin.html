@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Super Admin</title>
+    <title>ExamMaster - Super Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .active-tab { background: #0f172a; color: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .student-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .active-tab { background: #0f172a; color: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-        .student-list { display: flex; flex-direction: column; gap: 0.75rem; }
-        #upload-status { transition: all 0.3s ease; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-10 pb-20">
 
-    <!-- MODAL: Nayi Test Series Banayein -->
-    <div id="create-modal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- MODAL: Create Test Series with File Upload -->
+    <div id="create-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl p-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-2xl font-black text-slate-800 italic">Create New Test Series</h2>
@@ -29,51 +28,46 @@
             
             <div class="grid md:grid-cols-2 gap-8">
                 <div class="space-y-5">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Basic Details</label>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Series Details</label>
                     <input type="text" id="s-title" placeholder="Series Name" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
                     <textarea id="s-desc" placeholder="Series Description..." class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold h-24"></textarea>
                     <input type="number" id="s-price" placeholder="Price (INR)" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
                 </div>
                 <div class="space-y-5">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Test Setup & File</label>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">File & Validity</label>
                     <input type="number" id="s-validity" placeholder="Validity (Days)" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
-                    <input type="number" id="s-test-count" placeholder="Total Tests Count" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 ring-blue-500 font-bold">
                     
-                    <!-- CSV File Upload Field -->
+                    <!-- CSV File Input -->
                     <div class="relative group">
-                        <label for="csv-file" class="flex items-center justify-center gap-3 w-full p-4 bg-blue-50 text-blue-600 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer group-hover:bg-blue-100 transition font-bold text-sm">
-                            <i class="fa fa-file-csv text-xl"></i>
-                            <span id="file-name-label">Upload .csv Questions</span>
+                        <label for="csv-file" class="flex flex-col items-center justify-center w-full p-6 bg-blue-50 text-blue-600 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer group-hover:bg-blue-100 transition font-bold">
+                            <i class="fa fa-file-csv text-2xl mb-2"></i>
+                            <span id="file-name-label" class="text-[10px] uppercase">Upload .csv File</span>
                         </label>
                         <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="updateFileLabel()">
                     </div>
-                    <p id="upload-status" class="text-[10px] font-black uppercase text-center hidden"></p>
-
+                    
                     <input type="datetime-local" id="s-live-time" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-500">
                 </div>
             </div>
 
-            <button id="publish-btn" onclick="publishSeries()" class="w-full mt-10 bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition transform active:scale-95">
-                Publish Test Series Now
+            <button id="publish-btn" onclick="publishSeries()" class="w-full mt-10 bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl hover:bg-blue-700 transition transform active:scale-95">
+                Upload & Publish Now
             </button>
         </div>
     </div>
 
-    <!-- MODAL: Student Detailed View -->
-    <div id="user-modal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- MODAL: Student Details View -->
+    <div id="user-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl p-10">
-            <div id="user-modal-content" class="space-y-6">
-                <div class="animate-pulse flex flex-col items-center">
-                    <div class="w-20 h-20 bg-slate-100 rounded-full mb-4"></div>
-                    <div class="h-4 bg-slate-100 w-1/2 rounded mb-2"></div>
-                </div>
+            <div id="user-modal-content" class="space-y-6 text-center">
+                <p class="text-slate-400 font-bold italic">Fetching student data...</p>
             </div>
-            <button onclick="closeModal('user-modal')" class="w-full mt-8 py-4 bg-slate-100 rounded-2xl font-black text-slate-500">Close Console</button>
+            <button onclick="closeModal('user-modal')" class="w-full mt-8 py-4 bg-slate-100 rounded-2xl font-black text-slate-500 hover:bg-slate-200 transition">Close Panel</button>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
+        <!-- Header Section -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
             <div class="flex items-center gap-6">
                 <div class="w-16 h-16 bg-slate-900 rounded-[2rem] flex items-center justify-center text-white text-3xl shadow-2xl">
@@ -81,12 +75,12 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">Admin Console</h1>
-                    <p id="admin-id" class="text-xs font-bold text-blue-600 uppercase tracking-widest mt-1">Verifying Master Access...</p>
+                    <p id="auth-status" class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1 italic">Securing Connection...</p>
                 </div>
             </div>
             <div class="flex gap-4 w-full md:w-auto">
                 <button onclick="openModal('create-modal')" class="flex-1 md:flex-none bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition active:scale-95">
-                    <i class="fa fa-plus-circle mr-2"></i> Add Test Series
+                    <i class="fa fa-plus-circle mr-2"></i> New Test Series
                 </button>
                 <button onclick="logout()" class="w-16 h-16 bg-slate-50 rounded-2xl text-red-500 hover:bg-red-50 transition flex items-center justify-center text-xl">
                     <i class="fa fa-power-off"></i>
@@ -94,11 +88,11 @@
             </div>
         </header>
 
-        <!-- Tabs -->
+        <!-- View Controls & Tabs -->
         <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div class="flex gap-2 p-1.5 bg-slate-200/50 rounded-2xl w-fit">
                 <button onclick="switchTab('users')" id="tab-users-btn" class="active-tab px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">Registered Students</button>
-                <button onclick="switchTab('series')" id="tab-series-btn" class="px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400">Active Series</button>
+                <button onclick="switchTab('series')" id="tab-series-btn" class="px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400">Live Series</button>
             </div>
 
             <div id="view-controls" class="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
@@ -107,50 +101,62 @@
             </div>
         </div>
 
-        <!-- Containers -->
-        <section id="section-users"><div id="students-container" class="student-grid"></div></section>
-        <section id="section-series" class="hidden"><div id="series-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></section>
+        <!-- Registered Students Section -->
+        <section id="section-users">
+            <div id="students-container" class="student-grid"></div>
+        </section>
+
+        <!-- Published Series Section -->
+        <section id="section-series" class="hidden">
+            <div id="series-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </section>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        
-        import { firebaseConfig, ADMIN_EMAIL } from './config.js';
 
+        // Environment Config (No keys hardcoded)
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
-        const appId = "exam-master-v1";
 
         let currentView = 'grid';
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user || user.email !== ADMIN_EMAIL) {
-                window.location.href = "index.html";
+        // Secure Auth Logic
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
             } else {
-                document.getElementById('admin-id').innerText = `Authorized: ${user.email}`;
-                loadAllStudents();
-                loadAllSeries();
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-status').innerText = `Authorized Access: ${user.uid}`;
+                loadStudents();
+                loadSeries();
             }
         });
 
-        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
-
-        // UI Handlers
+        // UI Functions
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        window.logout = () => signOut(auth).then(() => location.reload());
 
         window.updateFileLabel = () => {
             const file = document.getElementById('csv-file').files[0];
             const label = document.getElementById('file-name-label');
             if (file) {
                 label.innerText = file.name;
-                label.parentElement.classList.replace('bg-blue-50', 'bg-green-50');
-                label.parentElement.classList.replace('text-blue-600', 'text-green-600');
+                label.parentElement.className = "flex flex-col items-center justify-center w-full p-6 bg-green-50 text-green-600 border-2 border-dashed border-green-200 rounded-2xl cursor-pointer group-hover:bg-green-100 transition font-bold";
             }
         };
 
@@ -164,27 +170,28 @@
 
         window.changeView = (view) => {
             currentView = view;
-            loadAllStudents();
+            const container = document.getElementById('students-container');
+            container.className = view === 'grid' ? 'student-grid' : 'student-list';
+            document.getElementById('view-grid-btn').className = view === 'grid' ? 'w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center' : 'w-10 h-10 rounded-xl bg-white text-slate-400 flex items-center justify-center';
+            document.getElementById('view-list-btn').className = view === 'list' ? 'w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center' : 'w-10 h-10 rounded-xl bg-white text-slate-400 flex items-center justify-center';
+            loadStudents();
         };
 
-        // Student Data Load
-        function loadAllStudents() {
-            const container = document.getElementById('students-container');
-            container.className = currentView === 'grid' ? 'student-grid' : 'student-list';
+        // STUDENT MANAGEMENT
+        function loadStudents() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'students'), (snap) => {
+                const container = document.getElementById('students-container');
                 container.innerHTML = "";
-                snap.forEach(d => {
-                    const s = d.data();
+                snap.forEach(docSnap => {
+                    const s = docSnap.data();
                     const html = currentView === 'grid' ? `
                         <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center">
                             <img src="${s.photoURL || 'https://via.placeholder.com/150'}" class="w-20 h-20 rounded-full mb-4 border-4 border-slate-50">
                             <h3 class="text-lg font-black text-slate-800">${s.displayName || 'Unnamed User'}</h3>
-                            <p class="text-xs font-bold text-slate-400">${s.email}</p>
+                            <p class="text-xs font-bold text-slate-400 mt-1">${s.email}</p>
                             <div class="flex gap-2 w-full mt-6">
-                                <button onclick="viewStudent('${d.id}')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Details</button>
-                                <button onclick="toggleBlock('${d.id}', ${s.disabled || false})" class="px-4 py-3 bg-slate-50 rounded-xl ${s.disabled ? 'text-green-500' : 'text-red-400'}">
-                                    <i class="fa ${s.disabled ? 'fa-unlock' : 'fa-ban'}"></i>
-                                </button>
+                                <button onclick="viewStudentDetails('${docSnap.id}')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Details</button>
+                                <button onclick="toggleUserStatus('${docSnap.id}', ${s.disabled})" class="px-4 py-3 bg-slate-50 rounded-xl ${s.disabled ? 'text-green-500' : 'text-red-400'}"><i class="fa ${s.disabled ? 'fa-unlock' : 'fa-ban'}"></i></button>
                             </div>
                         </div>
                     ` : `
@@ -196,7 +203,10 @@
                                     <p class="text-[10px] font-bold text-slate-400">${s.email}</p>
                                 </div>
                             </div>
-                            <button onclick="viewStudent('${d.id}')" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase">Details</button>
+                            <div class="flex gap-2">
+                                <button onclick="viewStudentDetails('${docSnap.id}')" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase">View Details</button>
+                                <button onclick="toggleUserStatus('${docSnap.id}', ${s.disabled})" class="w-10 h-10 bg-slate-50 rounded-xl ${s.disabled ? 'text-green-500' : 'text-red-400'}"><i class="fa ${s.disabled ? 'fa-unlock' : 'fa-ban'}"></i></button>
+                            </div>
                         </div>
                     `;
                     container.innerHTML += html;
@@ -204,68 +214,79 @@
             });
         }
 
-        // PUBLISH WITH FILE UPLOAD
+        window.toggleUserStatus = async (uid, isBlocked) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid), { disabled: !isBlocked });
+        };
+
+        window.viewStudentDetails = (uid) => {
+            openModal('user-modal');
+            const content = document.getElementById('user-modal-content');
+            // Fetch scores and purchases logic same as before...
+            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'scores'), (snap) => {
+                let scores = snap.docs.map(d => `<div class="p-4 bg-slate-50 rounded-xl flex justify-between"><span>${d.data().testName}</span><b>${d.data().score}%</b></div>`).join('');
+                content.innerHTML = `
+                    <h2 class="text-2xl font-black mb-6">Student Analytics</h2>
+                    <div class="space-y-3 text-left max-h-[300px] overflow-y-auto custom-scrollbar">
+                        ${scores || '<p class="text-center text-slate-400 italic">No tests attempted yet.</p>'}
+                    </div>
+                `;
+            });
+        };
+
+        // TEST SERIES MANAGEMENT
         window.publishSeries = async () => {
+            const btn = document.getElementById('publish-btn');
             const file = document.getElementById('csv-file').files[0];
             const title = document.getElementById('s-title').value;
-            const desc = document.getElementById('s-desc').value;
-            const price = document.getElementById('s-price').value;
-            const validity = document.getElementById('s-validity').value;
-            const tests = document.getElementById('s-test-count').value;
-            const live = document.getElementById('s-live-time').value;
-            const statusEl = document.getElementById('upload-status');
-            const btn = document.getElementById('publish-btn');
 
-            if(!title || !file) return alert("Pehle Title aur CSV File select karein!");
+            if(!file || !title) return alert("Pehle Title aur CSV file select karein!");
 
             try {
                 btn.disabled = true;
-                btn.innerText = "Uploading File...";
-                statusEl.classList.remove('hidden');
-                statusEl.innerText = "Syncing with cloud...";
+                btn.innerText = "Uploading CSV to Storage...";
 
-                // 1. Upload to Firebase Storage
-                const storageRef = ref(storage, `exam-master-v1/tests/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(snapshot.ref);
+                // 1. Upload to Storage (Path: artifacts/appId/public/data/csv_files/...)
+                const fileRef = ref(storage, `artifacts/${appId}/public/data/csv_files/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(fileRef, file);
+                const fileUrl = await getDownloadURL(snapshot.ref);
 
                 // 2. Save Data to Firestore
-                await addDoc(collection(db, "tests"), {
-                    title, desc, price, validity, testCount: tests, 
-                    sheetLink: downloadURL, // Now it's a direct file URL
-                    liveAt: live ? new Date(live) : serverTimestamp(),
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tests'), {
+                    title: title,
+                    desc: document.getElementById('s-desc').value,
+                    price: document.getElementById('s-price').value,
+                    validity: document.getElementById('s-validity').value,
+                    sheetLink: fileUrl,
+                    liveAt: document.getElementById('s-live-time').value || serverTimestamp(),
                     createdAt: serverTimestamp()
                 });
 
-                alert("Series Uploaded successfully!");
+                alert("Test Series Live Ho Chuki Hai!");
                 closeModal('create-modal');
-                location.reload(); // Refresh to clear form
-            } catch (err) { 
-                alert("Upload failed: " + err.message); 
+                location.reload();
+            } catch (err) {
+                alert("Upload failed: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "Publish Test Series Now";
+                btn.innerText = "Upload & Publish Now";
             }
         };
 
-        function loadAllSeries() {
-            onSnapshot(collection(db, "tests"), (snap) => {
+        function loadSeries() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tests'), (snap) => {
                 const container = document.getElementById('series-container');
                 container.innerHTML = "";
                 snap.forEach(d => {
                     const data = d.data();
                     container.innerHTML += `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex justify-between items-center">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex justify-between items-center shadow-sm">
                             <div class="flex-1">
                                 <h3 class="text-lg font-black text-slate-800">${data.title}</h3>
-                                <p class="text-xs text-slate-400 font-medium mb-4">${data.desc || 'No description'}</p>
-                                <div class="flex gap-4 items-center">
+                                <div class="flex gap-4 items-center mt-3">
                                     <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">₹${data.price}</span>
-                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${data.testCount} Tests</span>
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${data.validity} Days Validity</span>
                                 </div>
                             </div>
-                            <button onclick="deleteSeries('${d.id}')" class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition shadow-sm">
-                                <i class="fa fa-trash"></i>
-                            </button>
+                            <button onclick="deleteSeries('${d.id}')" class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition"><i class="fa fa-trash"></i></button>
                         </div>
                     `;
                 });
@@ -273,16 +294,8 @@
         }
 
         window.deleteSeries = async (id) => {
-            if(confirm("Delete this series?")) await deleteDoc(doc(db, "tests", id));
+            if(confirm("Confirm Delete Series?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tests', id));
         };
-
-        window.toggleBlock = async (uid, current) => {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid), {
-                disabled: !current
-            });
-        };
-        
-        window.viewStudent = (uid) => { /* Same as before logic */ };
     </script>
 </body>
 </html>
