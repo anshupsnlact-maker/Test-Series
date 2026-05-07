@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Dashboard</title>
+    <title>ExamMaster - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -13,6 +13,18 @@
     </style>
 </head>
 <body class="bg-[#F8FAFC] pb-24">
+
+    <!-- Block Overlay for Disabled Users -->
+    <div id="block-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6 hidden">
+        <div class="bg-white p-8 rounded-[2.5rem] text-center max-w-sm">
+            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                <i class="fa fa-user-slash"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Account Disabled</h2>
+            <p class="text-slate-500 text-sm mb-6">Your account has been disabled by the administrator. Please contact support for more information.</p>
+            <button onclick="logout()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Logout</button>
+        </div>
+    </div>
 
     <!-- Top Sticky Navigation -->
     <header class="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
@@ -29,7 +41,7 @@
     </header>
 
     <main class="p-5 max-w-lg mx-auto">
-        <!-- Quick Stats / Results Buttons -->
+        <!-- Quick Stats -->
         <div class="grid grid-cols-2 gap-4 mb-8 text-center">
             <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2">
                 <div class="w-10 h-10 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
@@ -45,31 +57,15 @@
             </div>
         </div>
 
-        <!-- Section: My Purchases (Mera Test Box) -->
+        <!-- Section: My Purchased Library -->
         <div class="mb-10">
             <h3 class="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
                 <i class="fa fa-briefcase text-blue-600"></i> My Test Library
             </h3>
             <div id="purchased-list" class="space-y-4">
-                <!-- Fallback empty state -->
                 <div class="p-10 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
                     <p class="text-slate-400 text-sm font-medium italic">No tests purchased yet.</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Admin Control Section (Visible only to defined Admin Email) -->
-        <div id="admin-section" class="hidden mb-10 p-6 bg-indigo-50 rounded-[2.5rem] border-2 border-dashed border-indigo-200">
-            <h4 class="font-black text-indigo-800 mb-4 flex items-center gap-2">
-                <i class="fa fa-shield-alt"></i> Admin: Create Test
-            </h4>
-            <div class="space-y-3">
-                <input type="text" id="t-title" placeholder="Test Series Name" class="w-full p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
-                <div class="flex gap-2">
-                    <input type="number" id="t-price" placeholder="Price ($)" class="w-1/2 p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
-                    <input type="number" id="t-mins" placeholder="Minutes" class="w-1/2 p-4 rounded-2xl bg-white outline-none text-sm border border-indigo-100">
-                </div>
-                <button onclick="createNewTest()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition">Add to Store</button>
             </div>
         </div>
 
@@ -95,9 +91,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
             authDomain: "test-series-e94cf.firebaseapp.com",
@@ -112,31 +107,46 @@
         const db = getFirestore(app);
         const appId = "exam-master-v1";
 
-        // Configuration: Define your Admin Email here
-        const ADMIN_EMAIL = "your-admin-email@gmail.com"; 
-
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
 
-        // Identity Verification
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = "index.html";
             } else {
+                // UI Updates
                 document.getElementById('user-avatar').src = user.photoURL;
                 document.getElementById('user-display-name').innerText = user.displayName.split(' ')[0];
+
+                // --- CRITICAL: REGISTER STUDENT DATA FOR ADMIN PANEL ---
+                const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
                 
-                // Show Admin Controls if the email matches
-                if(user.email === ADMIN_EMAIL) {
-                    document.getElementById('admin-section').classList.remove('hidden');
-                }
+                // Real-time listener for current user status (to check if disabled)
+                onSnapshot(studentRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        if (userData.disabled) {
+                            document.getElementById('block-overlay').classList.remove('hidden');
+                        } else {
+                            document.getElementById('block-overlay').classList.add('hidden');
+                        }
+                    } else {
+                        // First time login, create the record
+                        setDoc(studentRef, {
+                            name: user.displayName,
+                            email: user.email,
+                            photo: user.photoURL,
+                            lastLogin: serverTimestamp(),
+                            disabled: false 
+                        }, { merge: true });
+                    }
+                });
                 
                 initializeDataStreams(user.uid);
             }
         });
 
-        // Real-time Data Sync
         function initializeDataStreams(uid) {
-            // Stream 1: Available Tests in Shop
+            // Stream: Available Tests
             onSnapshot(collection(db, "tests"), (snapshot) => {
                 const shopContainer = document.getElementById('shop-list');
                 shopContainer.innerHTML = "";
@@ -159,7 +169,7 @@
                 });
             });
 
-            // Stream 2: User's Purchased Library
+            // Stream: Purchased Library
             const purchaseRef = collection(db, 'artifacts', appId, 'users', uid, 'purchases');
             onSnapshot(purchaseRef, (snapshot) => {
                 const libraryContainer = document.getElementById('purchased-list');
@@ -188,45 +198,17 @@
             });
         }
 
-        // Logic: Create New Test (Admin Only)
-        window.createNewTest = async () => {
-            const title = document.getElementById('t-title').value;
-            const price = document.getElementById('t-price').value;
-            const mins = document.getElementById('t-mins').value;
-            
-            if(!title || !price) return alert("Please fill in all test details.");
-            
-            try {
-                await addDoc(collection(db, "tests"), {
-                    title, 
-                    price, 
-                    duration: mins || "60", 
-                    createdAt: serverTimestamp()
-                });
-                document.getElementById('t-title').value = "";
-                document.getElementById('t-price').value = "";
-                alert("New test series added successfully!");
-            } catch (err) {
-                console.error("Save Error:", err);
-            }
-        };
-
-        // Logic: Process Purchase
         window.handlePurchase = async (id, title, price) => {
             const user = auth.currentUser;
             if(!user) return;
-            
             const purchaseDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'purchases', id);
             try {
                 await setDoc(purchaseDoc, {
-                    title, 
-                    price, 
-                    purchasedAt: serverTimestamp(),
-                    status: 'active'
+                    title, price, purchasedAt: serverTimestamp(), status: 'active'
                 });
                 alert(title + " has been added to your library!");
             } catch (err) {
-                console.error("Purchase Error:", err);
+                console.error(err);
             }
         };
 
