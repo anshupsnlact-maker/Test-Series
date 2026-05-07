@@ -1,257 +1,180 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Student Home</title>
+    <title>Home - ExamMaster</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        #side-menu { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
-        #side-menu.open { transform: translateX(0); }
-        .modal-enter { animation: modalFade 0.3s ease-out; }
-        @keyframes modalFade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdfeff; }
+        .user-gradient { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+        .series-card:hover { transform: translateY(-5px); transition: 0.3s ease; }
     </style>
 </head>
-<body class="pb-10">
+<body class="min-h-screen">
 
-    <!-- Blocked User Overlay -->
-    <div id="block-overlay" class="fixed inset-0 bg-slate-900/95 z-[200] flex items-center justify-center p-6 hidden">
-        <div class="bg-white p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
-            <div class="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
-                <i class="fa fa-ban"></i>
+    <!-- Top Navigation -->
+    <nav class="px-6 py-4 flex justify-between items-center border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fa fa-graduation-cap text-white text-sm"></i>
             </div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2">Account Blocked</h2>
-            <p class="text-slate-500 text-sm mb-8">Aapka account admin dwara block kar diya gaya hai. Kripya support se sampark karein.</p>
-            <button onclick="logout()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold hover:bg-black">Sign Out</button>
+            <span class="font-black text-slate-800">ExamMaster</span>
         </div>
-    </div>
-
-    <!-- Custom Name Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-black/70 z-[150] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm p-10 rounded-[3rem] modal-enter shadow-2xl">
-            <h3 class="text-2xl font-black text-slate-800 mb-2 text-center">Edit Profile</h3>
-            <p class="text-xs text-slate-400 text-center mb-8 font-medium">Aap apna dashboard par dikhne wala naam badal sakte hain.</p>
-            <input type="text" id="custom-name-input" placeholder="Apna naam likhein" class="w-full p-5 bg-slate-50 rounded-2xl border-none outline-none ring-2 ring-transparent focus:ring-blue-500 mb-6 font-bold text-lg text-center">
-            <div class="flex gap-4">
-                <button onclick="closeProfileModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-slate-600">Cancel</button>
-                <button onclick="saveCustomName()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 hover:bg-blue-700">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar Navigation -->
-    <div id="menu-overlay" class="fixed inset-0 bg-black/40 z-[100] hidden opacity-0 transition-opacity" onclick="toggleMenu()"></div>
-    <div id="side-menu" class="fixed top-0 left-0 h-full w-80 bg-white z-[110] shadow-2xl p-8 flex flex-col">
-        <div class="flex justify-between items-center mb-12">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa fa-graduation-cap"></i></div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">ExamMaster</h2>
-            </div>
-            <button onclick="toggleMenu()" class="w-10 h-10 bg-slate-50 rounded-full text-slate-300 hover:text-slate-600 flex items-center justify-center"><i class="fa fa-times"></i></button>
-        </div>
-        <div class="space-y-2 font-bold flex-1">
-            <button onclick="openProfileModal(); toggleMenu()" class="w-full flex items-center gap-4 p-5 hover:bg-blue-50 rounded-2xl text-blue-600 transition text-left group">
-                <i class="fa fa-user-edit text-xl group-hover:scale-110 transition"></i> Edit Display Name
-            </button>
-            <button onclick="window.location.href='store.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
-                <i class="fa fa-shopping-cart text-xl"></i> Test Store
-            </button>
-            <button onclick="window.location.href='favourites.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
-                <i class="fa fa-heart text-xl"></i> My Favourites
-            </button>
-            <button onclick="window.location.href='flagged.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
-                <i class="fa fa-flag text-xl"></i> Flagged Questions
-            </button>
-            <hr class="my-6 border-slate-100">
-            <button onclick="logout()" class="w-full flex items-center gap-4 p-5 hover:bg-red-50 rounded-2xl text-red-500 transition text-left">
-                <i class="fa fa-power-off text-xl"></i> Sign Out
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Header -->
-    <header class="p-6 flex justify-between items-center bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-40">
         <div class="flex items-center gap-4">
-            <div class="relative group cursor-pointer" onclick="openProfileModal()">
-                <img id="user-img" src="https://via.placeholder.com/150" class="w-14 h-14 rounded-full border-4 border-white shadow-xl object-cover transition transform group-hover:scale-105">
-                <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                    <i class="fa fa-camera text-white text-xs"></i>
+            <a href="store.html" class="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition-all">
+                <i class="fa fa-shopping-cart mr-1"></i> Buy Series
+            </a>
+            <button id="logout-btn" class="text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fa fa-sign-out-alt text-lg"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- User Header Section -->
+    <header class="max-w-6xl mx-auto p-6 mt-6">
+        <div class="user-gradient rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-blue-100">
+            <div class="relative z-10">
+                <p class="text-blue-300 font-bold text-xs uppercase tracking-widest mb-2">Welcome Back 👋</p>
+                <h1 id="user-name" class="text-3xl md:text-5xl font-black mb-2">Student Name</h1>
+                <p id="user-email" class="text-slate-400 font-medium text-sm md:text-base italic">student@email.com</p>
+                
+                <div class="mt-8 flex gap-4">
+                    <div class="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
+                        <p class="text-[10px] text-slate-300 font-bold uppercase mb-1">Purchased</p>
+                        <p id="series-count" class="text-2xl font-black">0</p>
+                    </div>
                 </div>
             </div>
-            <div>
-                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Student Portal</p>
-                <h1 id="user-name-display" class="text-xl font-black text-slate-800 leading-none truncate max-w-[150px]">Loading...</h1>
-            </div>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="window.location.href='store.html'" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition">
-                <i class="fa fa-plus"></i>
-            </button>
-            <button onclick="toggleMenu()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-800 hover:bg-slate-100 transition shadow-sm border border-slate-100">
-                <i class="fa fa-bars-staggered"></i>
-            </button>
+            <!-- Decorative circle -->
+            <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
         </div>
     </header>
 
-    <main class="max-w-xl mx-auto p-5">
-        <!-- Dashboard Section -->
-        <div class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden mb-6 min-h-[500px] flex flex-col mt-4">
-            <div class="flex border-b border-slate-100 bg-slate-50/30">
-                <button onclick="switchTab('upcoming')" id="tab-upcoming" class="flex-1 py-6 text-[11px] font-black uppercase tracking-widest tab-active transition-all">Available</button>
-                <button onclick="switchTab('live')" id="tab-live" class="flex-1 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all">My Tests</button>
-            </div>
+    <!-- Content Area -->
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black text-slate-800">My Test Series</h2>
+        </div>
 
-            <div id="content-box" class="p-8 flex-1 relative">
-                <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
-                    <div class="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Data</p>
-                </div>
-                
-                <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-center animate-pulse">
-                    <i class="fa fa-folder-open text-6xl text-slate-100 mb-6"></i>
-                    <p class="text-sm font-bold text-slate-400 italic">Yahan koi test nahi mila.</p>
-                </div>
+        <!-- Loader -->
+        <div id="loader" class="py-20 text-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="text-slate-400 mt-4 font-medium">Loading your dashboard...</p>
+        </div>
 
-                <div id="items-container" class="space-y-5"></div>
+        <!-- Purchased Series List -->
+        <div id="purchased-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Dynamic Cards -->
+        </div>
+
+        <!-- Empty State (No Series) -->
+        <div id="empty-state" class="hidden text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <i class="fa fa-folder-open text-slate-300 text-3xl"></i>
             </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">No Series Found</h3>
+            <p class="text-slate-500 mb-8 max-w-xs mx-auto">Aapne abhi tak koi test series nahi kharidi hai. Nayi series kharidne ke liye store par jayein.</p>
+            <a href="store.html" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition-transform inline-block shadow-xl">
+                Browse Store
+            </a>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Secure Import from config.js
-        import { firebaseConfig } from './config.js';
+        import { firebaseConfig, ADMIN_EMAIL } from './config.js';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "exam-master-v1";
 
-        let userState = { uid: null, customName: null };
+        const loader = document.getElementById('loader');
+        const purchasedGrid = document.getElementById('purchased-grid');
+        const emptyState = document.getElementById('empty-state');
+        const userNameDisp = document.getElementById('user-name');
+        const userEmailDisp = document.getElementById('user-email');
+        const seriesCountDisp = document.getElementById('series-count');
 
-        // UI Handlers
-        window.toggleMenu = () => {
-            const menu = document.getElementById('side-menu');
-            const overlay = document.getElementById('menu-overlay');
-            menu.classList.toggle('open');
-            overlay.classList.toggle('hidden');
-            setTimeout(() => overlay.classList.toggle('opacity-100'), 10);
-        };
-
-        window.openProfileModal = () => {
-            document.getElementById('profile-modal').classList.remove('hidden');
-            document.getElementById('custom-name-input').value = userState.customName || "";
-        };
-
-        window.closeProfileModal = () => document.getElementById('profile-modal').classList.add('hidden');
-        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
-
-        // Auth & Real-time Listeners
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = "index.html";
-            } else {
-                userState.uid = user.uid;
-                document.getElementById('user-img').src = user.photoURL;
-
-                // 1. Sync User Custom Name (Private Data)
-                const userPrivateRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'settings');
-                onSnapshot(userPrivateRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        userState.customName = docSnap.data().displayName;
-                        document.getElementById('user-name-display').innerText = userState.customName || user.displayName;
-                    } else {
-                        setDoc(userPrivateRef, { displayName: user.displayName, googleName: user.displayName });
-                        document.getElementById('user-name-display').innerText = user.displayName;
-                    }
-                });
-
-                // 2. Check if Blocked (Public Data)
-                const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
-                onSnapshot(studentRef, (docSnap) => {
-                    if (docSnap.exists() && docSnap.data().disabled) {
-                        document.getElementById('block-overlay').classList.remove('hidden');
-                    }
-                });
-
-                switchTab('upcoming');
+                return;
             }
+
+            // UI Update with User Info
+            userNameDisp.innerText = user.displayName || "Student";
+            userEmailDisp.innerText = user.email;
+
+            // Fetch Data from Firestore
+            fetchUserData(user);
         });
 
-        window.saveCustomName = async () => {
-            const newName = document.getElementById('custom-name-input').value.trim();
-            if(!newName) return;
-            const userRef = doc(db, 'artifacts', appId, 'users', userState.uid, 'profile', 'settings');
+        async function fetchUserData(user) {
             try {
-                await updateDoc(userRef, { displayName: newName });
-                closeProfileModal();
-            } catch (err) { console.error("Error updating name:", err); }
-        };
+                const userRef = doc(db, 'users', user.uid);
+                const userSnap = await getDoc(userRef);
 
-        window.switchTab = (tab) => {
-            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
-                btn.classList.remove('tab-active', 'text-slate-400');
-                if(btn.id === `tab-${tab}`) btn.classList.add('tab-active');
-                else btn.classList.add('text-slate-400');
-            });
-            loadTabData(tab);
-        };
+                let userData;
 
-        function loadTabData(tab) {
-            const container = document.getElementById('items-container');
-            const loader = document.getElementById('loader');
-            const empty = document.getElementById('empty-state');
-            
-            container.innerHTML = "";
-            loader.classList.remove('hidden');
-            empty.classList.add('hidden');
-
-            const purchaseRef = collection(db, 'artifacts', appId, 'users', userState.uid, 'purchases');
-            
-            onSnapshot(purchaseRef, (pSnap) => {
-                const purchasedIds = pSnap.docs.map(doc => doc.id);
-
-                if (tab === 'upcoming') {
-                    onSnapshot(collection(db, "tests"), (tSnap) => {
-                        loader.classList.add('hidden');
-                        const available = tSnap.docs.filter(d => !purchasedIds.includes(d.id));
-                        if(available.length === 0) empty.classList.remove('hidden');
-                        available.forEach(doc => renderItem(doc.id, doc.data(), true));
-                    });
+                if (!userSnap.exists()) {
+                    // Agar user naya hai, toh database mein entry banao
+                    userData = {
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        purchasedSeries: [],
+                        lastLogin: new Date().toLocaleString()
+                    };
+                    await setDoc(userRef, userData);
                 } else {
-                    loader.classList.add('hidden');
-                    if(pSnap.empty) empty.classList.remove('hidden');
-                    pSnap.forEach(doc => renderItem(doc.id, doc.data(), false));
+                    userData = userSnap.data();
                 }
-            });
+
+                renderPurchasedSeries(userData.purchasedSeries || []);
+
+            } catch (err) {
+                console.error(err);
+                loader.innerHTML = `<p class="text-red-500">Error loading data. Check console.</p>`;
+            }
         }
 
-        function renderItem(id, data, isUpcoming) {
-            const container = document.getElementById('items-container');
-            container.innerHTML += `
-                <div class="group p-7 rounded-[2.5rem] border ${isUpcoming ? 'bg-white border-slate-100' : 'bg-slate-900 text-white border-transparent'} flex justify-between items-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer">
-                    <div>
-                        <h4 class="font-black text-base tracking-tight">${data.title}</h4>
-                        <div class="flex gap-2 items-center text-[9px] font-bold opacity-40 uppercase mt-1 tracking-widest">
-                            <span>${data.duration || '60'} Mins</span>
-                            <span>•</span>
-                            <span>${isUpcoming ? 'Unlock via Store' : 'Active Subscription'}</span>
+        function renderPurchasedSeries(seriesList) {
+            loader.classList.add('hidden');
+            seriesCountDisp.innerText = seriesList.length;
+
+            if (seriesList.length === 0) {
+                emptyState.classList.remove('hidden');
+                purchasedGrid.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                purchasedGrid.classList.remove('hidden');
+                purchasedGrid.innerHTML = '';
+
+                seriesList.forEach(series => {
+                    const card = document.createElement('div');
+                    card.className = "series-card bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col";
+                    card.innerHTML = `
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                            <i class="fa fa-file-alt text-xl"></i>
                         </div>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isUpcoming ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-white/10 text-white group-hover:bg-white group-hover:text-slate-900'}">
-                        <i class="fa ${isUpcoming ? 'fa-cart-shopping' : 'fa-play'} text-sm"></i>
-                    </div>
-                </div>
-            `;
+                        <h3 class="font-bold text-slate-800 text-lg mb-2">${series.name}</h3>
+                        <p class="text-slate-400 text-xs mb-6 font-medium">Valid until: ${series.expiryDate || 'Unlimited'}</p>
+                        <button class="mt-auto w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">
+                            Start Test
+                        </button>
+                    `;
+                    purchasedGrid.appendChild(card);
+                });
+            }
         }
+
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
     </script>
 </body>
 </html>
