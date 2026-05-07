@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Home</title>
+    <title>ExamMaster - Student Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -18,95 +19,105 @@
 </head>
 <body class="pb-10">
 
-    <!-- Account Disabled Overlay -->
-    <div id="block-overlay" class="fixed inset-0 bg-slate-900/90 z-[200] flex items-center justify-center p-6 hidden">
-        <div class="bg-white p-8 rounded-[2.5rem] text-center max-w-sm shadow-2xl">
-            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                <i class="fa fa-user-slash"></i>
+    <!-- Blocked User Overlay -->
+    <div id="block-overlay" class="fixed inset-0 bg-slate-900/95 z-[200] flex items-center justify-center p-6 hidden">
+        <div class="bg-white p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
+            <div class="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+                <i class="fa fa-ban"></i>
             </div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2">Access Restricted</h2>
-            <p class="text-slate-500 text-sm mb-6">Your account has been disabled by the administrator.</p>
-            <button onclick="logout()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Sign Out</button>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Account Blocked</h2>
+            <p class="text-slate-500 text-sm mb-8">Aapka account admin dwara block kar diya gaya hai. Kripya support se sampark karein.</p>
+            <button onclick="logout()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold hover:bg-black">Sign Out</button>
         </div>
     </div>
 
-    <!-- Edit Name Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-black/60 z-[150] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-xs p-8 rounded-[2.5rem] modal-enter shadow-2xl">
-            <h3 class="text-xl font-black text-slate-800 mb-2 text-center">Display Name</h3>
-            <p class="text-xs text-slate-400 text-center mb-6">Set your custom name for the dashboard.</p>
-            <input type="text" id="custom-name-input" placeholder="Your Name" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none ring-2 ring-transparent focus:ring-blue-500 mb-4 font-bold text-center">
-            <div class="flex gap-2">
-                <button onclick="closeProfileModal()" class="flex-1 py-3 text-slate-400 font-bold text-sm">Cancel</button>
-                <button onclick="saveCustomName()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-100">Update</button>
+    <!-- Custom Name Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/70 z-[150] hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm p-10 rounded-[3rem] modal-enter shadow-2xl">
+            <h3 class="text-2xl font-black text-slate-800 mb-2 text-center">Edit Profile</h3>
+            <p class="text-xs text-slate-400 text-center mb-8 font-medium">Aap apna dashboard par dikhne wala naam badal sakte hain.</p>
+            <input type="text" id="custom-name-input" placeholder="Apna naam likhein" class="w-full p-5 bg-slate-50 rounded-2xl border-none outline-none ring-2 ring-transparent focus:ring-blue-500 mb-6 font-bold text-lg text-center">
+            <div class="flex gap-4">
+                <button onclick="closeProfileModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-slate-600">Cancel</button>
+                <button onclick="saveCustomName()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 hover:bg-blue-700">Save Changes</button>
             </div>
         </div>
     </div>
 
-    <!-- Sidebar Menu -->
+    <!-- Sidebar Navigation -->
     <div id="menu-overlay" class="fixed inset-0 bg-black/40 z-[100] hidden opacity-0 transition-opacity" onclick="toggleMenu()"></div>
-    <div id="side-menu" class="fixed top-0 left-0 h-full w-72 bg-white z-[110] shadow-2xl p-6 flex flex-col">
-        <div class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white"><i class="fa fa-bolt"></i></div>
-                <h2 class="text-xl font-black text-slate-800">ExamMaster</h2>
+    <div id="side-menu" class="fixed top-0 left-0 h-full w-80 bg-white z-[110] shadow-2xl p-8 flex flex-col">
+        <div class="flex justify-between items-center mb-12">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa fa-graduation-cap"></i></div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">ExamMaster</h2>
             </div>
-            <button onclick="toggleMenu()" class="text-slate-300"><i class="fa fa-times text-xl"></i></button>
+            <button onclick="toggleMenu()" class="w-10 h-10 bg-slate-50 rounded-full text-slate-300 hover:text-slate-600 flex items-center justify-center"><i class="fa fa-times"></i></button>
         </div>
         <div class="space-y-2 font-bold flex-1">
-            <button onclick="openProfileModal(); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-blue-50 rounded-2xl text-blue-600 transition text-left">
-                <i class="fa fa-user-edit text-lg"></i> Edit Profile
+            <button onclick="openProfileModal(); toggleMenu()" class="w-full flex items-center gap-4 p-5 hover:bg-blue-50 rounded-2xl text-blue-600 transition text-left group">
+                <i class="fa fa-user-edit text-xl group-hover:scale-110 transition"></i> Edit Display Name
             </button>
-            <button onclick="switchTab('live'); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
-                <i class="fa fa-shopping-bag text-lg"></i> My Purchases
+            <button onclick="window.location.href='store.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
+                <i class="fa fa-shopping-cart text-xl"></i> Test Store
             </button>
-            <button onclick="window.location.href='store.html'" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
-                <i class="fa fa-store text-lg"></i> Visit Store
+            <button onclick="window.location.href='favourites.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
+                <i class="fa fa-heart text-xl"></i> My Favourites
             </button>
-            <hr class="my-4 border-slate-100">
-            <button onclick="logout()" class="w-full flex items-center gap-4 p-4 hover:bg-red-50 rounded-2xl text-red-500 transition text-left">
-                <i class="fa fa-power-off text-lg"></i> Logout
+            <button onclick="window.location.href='flagged.html'" class="w-full flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl text-slate-600 transition text-left">
+                <i class="fa fa-flag text-xl"></i> Flagged Questions
+            </button>
+            <hr class="my-6 border-slate-100">
+            <button onclick="logout()" class="w-full flex items-center gap-4 p-5 hover:bg-red-50 rounded-2xl text-red-500 transition text-left">
+                <i class="fa fa-power-off text-xl"></i> Sign Out
             </button>
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="p-6 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
+    <!-- Main Header -->
+    <header class="p-6 flex justify-between items-center bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-40">
         <div class="flex items-center gap-4">
             <div class="relative group cursor-pointer" onclick="openProfileModal()">
-                <img id="user-img" src="https://via.placeholder.com/150" class="w-14 h-14 rounded-full border-4 border-white shadow-lg object-cover">
-                <div class="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                    <i class="fa fa-edit text-white text-xs"></i>
+                <img id="user-img" src="https://via.placeholder.com/150" class="w-14 h-14 rounded-full border-4 border-white shadow-xl object-cover transition transform group-hover:scale-105">
+                <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <i class="fa fa-camera text-white text-xs"></i>
                 </div>
             </div>
             <div>
-                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Welcome Back</p>
-                <h1 id="user-name-display" class="text-xl font-black text-slate-800 leading-none">...</h1>
+                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Student Portal</p>
+                <h1 id="user-name-display" class="text-xl font-black text-slate-800 leading-none truncate max-w-[150px]">Loading...</h1>
             </div>
         </div>
-        <button onclick="toggleMenu()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-800 hover:bg-slate-100 transition">
-            <i class="fa fa-bars-staggered text-lg"></i>
-        </button>
+        <div class="flex gap-3">
+            <button onclick="window.location.href='store.html'" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition">
+                <i class="fa fa-plus"></i>
+            </button>
+            <button onclick="toggleMenu()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-800 hover:bg-slate-100 transition shadow-sm border border-slate-100">
+                <i class="fa fa-bars-staggered"></i>
+            </button>
+        </div>
     </header>
 
     <main class="max-w-xl mx-auto p-5">
-        <!-- Dashboard Tabs -->
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-6 min-h-[400px] flex flex-col mt-4">
-            <div class="flex border-b border-slate-100 bg-slate-50/50">
-                <button onclick="switchTab('upcoming')" id="tab-upcoming" class="flex-1 py-5 text-[10px] font-black uppercase tracking-widest tab-active">New Tests</button>
-                <button onclick="switchTab('live')" id="tab-live" class="flex-1 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">My Exams</button>
+        <!-- Dashboard Section -->
+        <div class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden mb-6 min-h-[500px] flex flex-col mt-4">
+            <div class="flex border-b border-slate-100 bg-slate-50/30">
+                <button onclick="switchTab('upcoming')" id="tab-upcoming" class="flex-1 py-6 text-[11px] font-black uppercase tracking-widest tab-active transition-all">Available</button>
+                <button onclick="switchTab('live')" id="tab-live" class="flex-1 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all">My Tests</button>
             </div>
 
-            <div id="content-box" class="p-6 flex-1 relative">
+            <div id="content-box" class="p-8 flex-1 relative">
                 <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
-                    <i class="fa fa-circle-notch fa-spin text-3xl mb-2 text-blue-500"></i>
-                    <p class="text-[10px] font-black uppercase tracking-widest">Loading</p>
+                    <div class="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Data</p>
                 </div>
-                <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-center">
-                    <i class="fa fa-inbox text-5xl text-slate-100 mb-4"></i>
-                    <p class="text-sm font-bold text-slate-400">Nothing to show here</p>
+                
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-center animate-pulse">
+                    <i class="fa fa-folder-open text-6xl text-slate-100 mb-6"></i>
+                    <p class="text-sm font-bold text-slate-400 italic">Yahan koi test nahi mila.</p>
                 </div>
-                <div id="items-container" class="space-y-4"></div>
+
+                <div id="items-container" class="space-y-5"></div>
             </div>
         </div>
     </main>
@@ -116,6 +127,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
+        // Secure Import from config.js
         import { firebaseConfig } from './config.js';
 
         const app = initializeApp(firebaseConfig);
@@ -125,7 +137,7 @@
 
         let userState = { uid: null, customName: null };
 
-        // Global Window Functions
+        // UI Handlers
         window.toggleMenu = () => {
             const menu = document.getElementById('side-menu');
             const overlay = document.getElementById('menu-overlay');
@@ -140,10 +152,9 @@
         };
 
         window.closeProfileModal = () => document.getElementById('profile-modal').classList.add('hidden');
-
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
 
-        // Auth Logic
+        // Auth & Real-time Listeners
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = "index.html";
@@ -151,7 +162,7 @@
                 userState.uid = user.uid;
                 document.getElementById('user-img').src = user.photoURL;
 
-                // Sync Private Settings (Custom Name)
+                // 1. Sync User Custom Name (Private Data)
                 const userPrivateRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'settings');
                 onSnapshot(userPrivateRef, (docSnap) => {
                     if (docSnap.exists()) {
@@ -163,9 +174,9 @@
                     }
                 });
 
-                // Sync Public Status (Block/Unblock)
-                const studentPublicRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
-                onSnapshot(studentPublicRef, (docSnap) => {
+                // 2. Check if Blocked (Public Data)
+                const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
+                onSnapshot(studentRef, (docSnap) => {
                     if (docSnap.exists() && docSnap.data().disabled) {
                         document.getElementById('block-overlay').classList.remove('hidden');
                     }
@@ -178,11 +189,11 @@
         window.saveCustomName = async () => {
             const newName = document.getElementById('custom-name-input').value.trim();
             if(!newName) return;
-            const userPrivateRef = doc(db, 'artifacts', appId, 'users', userState.uid, 'profile', 'settings');
+            const userRef = doc(db, 'artifacts', appId, 'users', userState.uid, 'profile', 'settings');
             try {
-                await updateDoc(userPrivateRef, { displayName: newName });
+                await updateDoc(userRef, { displayName: newName });
                 closeProfileModal();
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Error updating name:", err); }
         };
 
         window.switchTab = (tab) => {
@@ -226,13 +237,17 @@
         function renderItem(id, data, isUpcoming) {
             const container = document.getElementById('items-container');
             container.innerHTML += `
-                <div class="p-6 rounded-[2rem] border ${isUpcoming ? 'bg-white border-slate-100' : 'bg-slate-900 text-white border-transparent'} flex justify-between items-center transition active:scale-95 cursor-pointer">
+                <div class="group p-7 rounded-[2.5rem] border ${isUpcoming ? 'bg-white border-slate-100' : 'bg-slate-900 text-white border-transparent'} flex justify-between items-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer">
                     <div>
-                        <h4 class="font-black text-sm">${data.title}</h4>
-                        <p class="text-[9px] font-bold opacity-50 uppercase mt-1 tracking-wider">${isUpcoming ? 'Available in Store' : 'Active Subscription'}</p>
+                        <h4 class="font-black text-base tracking-tight">${data.title}</h4>
+                        <div class="flex gap-2 items-center text-[9px] font-bold opacity-40 uppercase mt-1 tracking-widest">
+                            <span>${data.duration || '60'} Mins</span>
+                            <span>•</span>
+                            <span>${isUpcoming ? 'Unlock via Store' : 'Active Subscription'}</span>
+                        </div>
                     </div>
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center ${isUpcoming ? 'bg-blue-50 text-blue-600' : 'bg-white/10 text-white'}">
-                        <i class="fa ${isUpcoming ? 'fa-shopping-cart' : 'fa-play'} text-[10px]"></i>
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isUpcoming ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-white/10 text-white group-hover:bg-white group-hover:text-slate-900'}">
+                        <i class="fa ${isUpcoming ? 'fa-cart-shopping' : 'fa-play'} text-sm"></i>
                     </div>
                 </div>
             `;
