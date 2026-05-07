@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamMaster - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-6">
+
+    <div class="w-full max-w-sm bg-white p-8 rounded-[2.5rem] shadow-2xl text-center border border-slate-100">
+        <div class="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl rotate-6">
+            <i class="fa fa-graduation-cap text-white text-4xl"></i>
+        </div>
+        <h1 class="text-3xl font-black text-slate-800 mb-2">ExamMaster</h1>
+        <p class="text-slate-400 mb-10 leading-relaxed text-sm">Behtareen Test Series ke liye <br>Google se Sign-In karein.</p>
+        
+        <button id="google-login-btn" class="w-full group relative flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png" class="w-6 h-6">
+            Google Se Login
+        </button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
+            authDomain: "test-series-e94cf.firebaseapp.com",
+            projectId: "test-series-e94cf",
+            storageBucket: "test-series-e94cf.firebasestorage.app",
+            messagingSenderId: "1089405186531",
+            appId: "1:1089405186531:web:5c47280e47e5373bf4f0d6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Login Logic
+        document.getElementById('google-login-btn').onclick = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (err) {
+                alert("Login Error: " + err.message);
+            }
+        };
+
+        // Redirect if already logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = "student.html";
+            }
+        });
+    </script>
+</body>
+</html>
