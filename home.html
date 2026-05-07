@@ -7,91 +7,140 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .glass-effect { backdrop-filter: blur(15px); background: rgba(255, 255, 255, 0.85); }
-        .active-nav { color: #2563eb; }
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
+        #side-menu { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
+        #side-menu.open { transform: translateX(0); }
+        .modal-enter { animation: modalFade 0.3s ease-out; }
+        @keyframes modalFade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-<body class="bg-[#F8FAFC] pb-24">
+<body class="pb-10">
 
-    <!-- Block Overlay for Disabled Users -->
-    <div id="block-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6 hidden">
-        <div class="bg-white p-8 rounded-[2.5rem] text-center max-w-sm">
+    <!-- Account Disabled Overlay -->
+    <div id="block-overlay" class="fixed inset-0 bg-slate-900/90 z-[200] flex items-center justify-center p-6 hidden">
+        <div class="bg-white p-8 rounded-[2.5rem] text-center max-w-sm shadow-2xl">
             <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
                 <i class="fa fa-user-slash"></i>
             </div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2">Account Disabled</h2>
-            <p class="text-slate-500 text-sm mb-6">Your account has been disabled by the administrator. Please contact support for more information.</p>
-            <button onclick="logout()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Logout</button>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Account Restricted</h2>
+            <p class="text-slate-500 text-sm mb-6">Your access has been limited by the admin.</p>
+            <button onclick="logout()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Sign Out</button>
         </div>
     </div>
 
-    <!-- Top Sticky Navigation -->
-    <header class="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-slate-100">
-        <div class="flex items-center gap-3">
-            <img id="user-avatar" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://via.placeholder.com/100">
-            <div>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight">Welcome,</p>
-                <h3 id="user-display-name" class="font-black text-slate-800 leading-none">Student</h3>
+    <!-- Edit Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/60 z-[150] hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-xs p-8 rounded-[2.5rem] modal-enter shadow-2xl">
+            <h3 class="text-xl font-black text-slate-800 mb-2 text-center">Edit Display Name</h3>
+            <p class="text-xs text-slate-400 text-center mb-6">Change how your name appears on the dashboard.</p>
+            <input type="text" id="custom-name-input" placeholder="Enter custom name" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none ring-2 ring-transparent focus:ring-blue-500 mb-4 font-bold">
+            <div class="flex gap-2">
+                <button onclick="closeProfileModal()" class="flex-1 py-3 text-slate-400 font-bold text-sm">Cancel</button>
+                <button onclick="saveCustomName()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-100">Save</button>
             </div>
         </div>
-        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition">
-            <i class="fa fa-sign-out-alt text-xl"></i>
+    </div>
+
+    <!-- Side Navigation Menu (Pop-up) -->
+    <div id="menu-overlay" class="fixed inset-0 bg-black/40 z-[100] hidden opacity-0 transition-opacity" onclick="toggleMenu()"></div>
+    <div id="side-menu" class="fixed top-0 left-0 h-full w-72 bg-white z-[110] shadow-2xl p-6 flex flex-col">
+        <div class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white"><i class="fa fa-bolt"></i></div>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight">ExamMaster</h2>
+            </div>
+            <button onclick="toggleMenu()" class="text-slate-300 hover:text-slate-600"><i class="fa fa-times text-xl"></i></button>
+        </div>
+        <div class="space-y-1 font-bold flex-1">
+            <button onclick="openProfileModal(); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-blue-50 rounded-2xl text-blue-600 transition">
+                <i class="fa fa-user-circle text-lg"></i> My Profile
+            </button>
+            <button onclick="switchTab('live'); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl text-slate-600 transition">
+                <i class="fa fa-shopping-cart text-lg"></i> Bought Series
+            </button>
+            <button onclick="showFavorites(); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl text-slate-600 transition">
+                <i class="fa fa-heart text-lg"></i> Favourite Series
+            </button>
+            <button onclick="showFlagged(); toggleMenu()" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl text-slate-600 transition">
+                <i class="fa fa-flag text-lg"></i> Flagged Questions
+            </button>
+            <hr class="my-4 border-slate-100">
+            <button onclick="logout()" class="w-full flex items-center gap-4 p-4 hover:bg-red-50 rounded-2xl text-red-500 transition">
+                <i class="fa fa-power-off text-lg"></i> Log Out
+            </button>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest text-center">Version 1.0.4 - Pro</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="p-6 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <div class="relative group cursor-pointer" onclick="openProfileModal()">
+                <img id="user-img" src="https://via.placeholder.com/150" class="w-14 h-14 rounded-full border-4 border-white shadow-lg object-cover">
+                <div class="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <i class="fa fa-edit text-white text-xs"></i>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Student Dashboard</p>
+                <h1 id="user-name-display" class="text-xl font-black text-slate-800 leading-none">Loading...</h1>
+            </div>
+        </div>
+        <button onclick="window.location.href='store.html'" class="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl shadow-slate-200 active:scale-95 transition">
+            <i class="fa fa-shopping-bag text-sm"></i>
+            <span class="text-xs font-black uppercase tracking-tight">Store</span>
         </button>
     </header>
 
-    <main class="p-5 max-w-lg mx-auto">
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-2 gap-4 mb-8 text-center">
-            <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2">
-                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
-                    <i class="fa fa-chart-bar"></i>
-                </div>
-                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">My Results</span>
+    <main class="max-w-xl mx-auto p-5">
+        
+        <!-- Menu Trigger Button -->
+        <div class="mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMenu()" class="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 transition">
+                    <i class="fa fa-bars-staggered text-lg"></i>
+                </button>
+                <h2 class="text-lg font-black text-slate-800 tracking-tight">Your Journey</h2>
             </div>
-            <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2">
-                <div class="w-10 h-10 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
-                    <i class="fa fa-clock"></i>
-                </div>
-                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Expired</span>
+            <div class="text-right">
+                <p id="date-display" class="text-[10px] font-bold text-slate-400 uppercase"></p>
             </div>
         </div>
 
-        <!-- Section: My Purchased Library -->
-        <div class="mb-10">
-            <h3 class="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
-                <i class="fa fa-briefcase text-blue-600"></i> My Test Library
-            </h3>
-            <div id="purchased-list" class="space-y-4">
-                <div class="p-10 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
-                    <p class="text-slate-400 text-sm font-medium italic">No tests purchased yet.</p>
+        <!-- Tab System -->
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-6 min-h-[500px] flex flex-col">
+            <div class="flex border-b border-slate-100 bg-slate-50/50">
+                <button onclick="switchTab('upcoming')" id="tab-upcoming" class="flex-1 py-5 text-[10px] font-black uppercase tracking-widest tab-active transition-all">Upcoming</button>
+                <button onclick="switchTab('live')" id="tab-live" class="flex-1 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all">Live</button>
+                <button onclick="switchTab('past')" id="tab-past" class="flex-1 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all">Past</button>
+            </div>
+
+            <!-- Content Area -->
+            <div id="content-box" class="p-6 flex-1 relative">
+                <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
+                    <i class="fa fa-spinner fa-spin text-4xl mb-4 text-blue-500"></i>
+                    <p class="text-xs font-black uppercase tracking-widest">Loading Records</p>
                 </div>
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-slate-300 text-center">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-wind text-3xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-400">Everything is clear here!</p>
+                </div>
+                <div id="items-container" class="space-y-4"></div>
             </div>
         </div>
 
-        <!-- Section: Shop (Available Series) -->
-        <div>
-            <h3 class="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
-                <i class="fa fa-store text-emerald-500"></i> Available Series
-            </h3>
-            <div id="shop-list" class="space-y-4">
-                <!-- Loaded from Firestore -->
-            </div>
-        </div>
     </main>
-
-    <!-- Bottom App Navigation -->
-    <nav class="fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-8 z-50">
-        <button class="active-nav"><i class="fa fa-home text-xl"></i></button>
-        <button class="text-slate-500 hover:text-white"><i class="fa fa-book text-xl"></i></button>
-        <button class="text-slate-500 hover:text-white"><i class="fa fa-medal text-xl"></i></button>
-        <button class="text-slate-500 hover:text-white"><i class="fa fa-user-circle text-xl"></i></button>
-    </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
@@ -107,110 +156,144 @@
         const db = getFirestore(app);
         const appId = "exam-master-v1";
 
+        let userState = { uid: null, customName: null };
+
+        // --- Date Display ---
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString('en-US', options);
+
+        // --- Menu & Modal Controls ---
+        window.toggleMenu = () => {
+            document.getElementById('side-menu').classList.toggle('open');
+            document.getElementById('menu-overlay').classList.toggle('hidden');
+            setTimeout(() => document.getElementById('menu-overlay').classList.toggle('opacity-100'), 10);
+        };
+
+        window.openProfileModal = () => {
+            document.getElementById('profile-modal').classList.remove('hidden');
+            document.getElementById('custom-name-input').value = userState.customName || "";
+        };
+
+        window.closeProfileModal = () => document.getElementById('profile-modal').classList.add('hidden');
+
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
 
+        // --- Core Data Sync ---
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = "index.html";
             } else {
-                // UI Updates
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('user-display-name').innerText = user.displayName.split(' ')[0];
+                userState.uid = user.uid;
+                document.getElementById('user-img').src = user.photoURL;
 
-                // --- CRITICAL: REGISTER STUDENT DATA FOR ADMIN PANEL ---
-                const studentRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
-                
-                // Real-time listener for current user status (to check if disabled)
-                onSnapshot(studentRef, (docSnap) => {
+                // Sync with Private User Doc for Custom Name
+                const userPrivateRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'settings');
+                const studentPublicRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', user.uid);
+
+                // Check and save initial data
+                onSnapshot(userPrivateRef, (docSnap) => {
                     if (docSnap.exists()) {
-                        const userData = docSnap.data();
-                        if (userData.disabled) {
-                            document.getElementById('block-overlay').classList.remove('hidden');
-                        } else {
-                            document.getElementById('block-overlay').classList.add('hidden');
-                        }
+                        userState.customName = docSnap.data().displayName;
+                        document.getElementById('user-name-display').innerText = userState.customName || user.displayName;
                     } else {
-                        // First time login, create the record
-                        setDoc(studentRef, {
-                            name: user.displayName,
-                            email: user.email,
-                            photo: user.photoURL,
-                            lastLogin: serverTimestamp(),
-                            disabled: false 
-                        }, { merge: true });
+                        // First time: use Google Name
+                        setDoc(userPrivateRef, { displayName: user.displayName, googleName: user.displayName });
+                        document.getElementById('user-name-display').innerText = user.displayName;
                     }
                 });
-                
-                initializeDataStreams(user.uid);
+
+                // Admin Status Check
+                onSnapshot(studentPublicRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().disabled) {
+                        document.getElementById('block-overlay').classList.remove('hidden');
+                    } else if (!docSnap.exists()) {
+                        setDoc(studentPublicRef, {
+                            name: user.displayName, // Always Google Name for Admin
+                            email: user.email,
+                            photo: user.photoURL,
+                            disabled: false 
+                        });
+                    }
+                });
+
+                switchTab('upcoming');
             }
         });
 
-        function initializeDataStreams(uid) {
-            // Stream: Available Tests
-            onSnapshot(collection(db, "tests"), (snapshot) => {
-                const shopContainer = document.getElementById('shop-list');
-                shopContainer.innerHTML = "";
-                snapshot.forEach(snapDoc => {
-                    const data = snapDoc.data();
-                    shopContainer.innerHTML += `
-                        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
-                            <div>
-                                <h4 class="font-bold text-slate-800">${data.title}</h4>
-                                <div class="flex gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    <span>${data.duration || '60'} Mins</span>
-                                    <span>•</span>
-                                    <span>Practice Mock</span>
-                                </div>
-                                <p class="text-blue-600 font-black text-xl mt-1">$${data.price}</p>
-                            </div>
-                            <button onclick="handlePurchase('${snapDoc.id}', '${data.title}', '${data.price}')" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition">Enroll</button>
-                        </div>
-                    `;
-                });
-            });
+        // --- Custom Name Logic ---
+        window.saveCustomName = async () => {
+            const newName = document.getElementById('custom-name-input').value.trim();
+            if(!newName) return;
+            
+            const userPrivateRef = doc(db, 'artifacts', appId, 'users', userState.uid, 'profile', 'settings');
+            try {
+                await updateDoc(userPrivateRef, { displayName: newName });
+                closeProfileModal();
+            } catch (err) { console.error(err); }
+        };
 
-            // Stream: Purchased Library
-            const purchaseRef = collection(db, 'artifacts', appId, 'users', uid, 'purchases');
-            onSnapshot(purchaseRef, (snapshot) => {
-                const libraryContainer = document.getElementById('purchased-list');
-                if(snapshot.empty) return;
-                
-                libraryContainer.innerHTML = "";
-                snapshot.forEach(snapDoc => {
-                    const data = snapDoc.data();
-                    libraryContainer.innerHTML += `
-                        <div class="bg-gradient-to-tr from-blue-700 to-indigo-800 p-6 rounded-[2rem] shadow-xl text-white">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="font-black text-xl">${data.title}</h4>
-                                    <p class="text-blue-200 text-[10px] font-bold uppercase tracking-widest mt-1">Lifetime Access</p>
-                                </div>
-                                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                    <i class="fa fa-check text-blue-100"></i>
-                                </div>
-                            </div>
-                            <button class="w-full bg-white text-blue-700 font-black py-4 rounded-2xl shadow-xl hover:bg-blue-50 active:scale-95 transition">
-                                <i class="fa fa-play-circle mr-2"></i> Start Attempt
-                            </button>
-                        </div>
-                    `;
-                });
+        // --- Tab Switching ---
+        window.switchTab = (tab) => {
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('text-slate-400');
+            loadTabData(tab);
+        };
+
+        async function loadTabData(tab) {
+            const container = document.getElementById('items-container');
+            const loader = document.getElementById('loader');
+            const empty = document.getElementById('empty-state');
+            
+            container.innerHTML = "";
+            loader.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            const purchaseRef = collection(db, 'artifacts', appId, 'users', userState.uid, 'purchases');
+            
+            onSnapshot(purchaseRef, (pSnap) => {
+                const purchasedIds = pSnap.docs.map(doc => doc.id);
+
+                if (tab === 'upcoming') {
+                    onSnapshot(collection(db, "tests"), (tSnap) => {
+                        loader.classList.add('hidden');
+                        const available = tSnap.docs.filter(d => !purchasedIds.includes(d.id));
+                        if(available.length === 0) empty.classList.remove('hidden');
+                        available.forEach(doc => renderItem(doc.id, doc.data(), 'upcoming'));
+                    });
+                } else if (tab === 'live') {
+                    loader.classList.add('hidden');
+                    if(pSnap.empty) empty.classList.remove('hidden');
+                    pSnap.forEach(doc => renderItem(doc.id, doc.data(), 'live'));
+                } else {
+                    loader.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                }
             });
         }
 
-        window.handlePurchase = async (id, title, price) => {
-            const user = auth.currentUser;
-            if(!user) return;
-            const purchaseDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'purchases', id);
-            try {
-                await setDoc(purchaseDoc, {
-                    title, price, purchasedAt: serverTimestamp(), status: 'active'
-                });
-                alert(title + " has been added to your library!");
-            } catch (err) {
-                console.error(err);
-            }
-        };
+        function renderItem(id, data, type) {
+            const container = document.getElementById('items-container');
+            let isUpcoming = type === 'upcoming';
+            container.innerHTML += `
+                <div class="${isUpcoming ? 'bg-white' : 'bg-blue-600 text-white'} p-6 rounded-[2rem] shadow-sm border border-slate-100 flex justify-between items-center transition active:scale-95">
+                    <div>
+                        <h4 class="font-black ${isUpcoming ? 'text-slate-800' : 'text-white'}">${data.title}</h4>
+                        <div class="flex gap-2 text-[8px] font-bold ${isUpcoming ? 'text-slate-400' : 'text-blue-100'} uppercase tracking-widest mt-1">
+                            <span>${data.duration || '60'} Mins</span>
+                            <span>•</span>
+                            <span>${isUpcoming ? '$' + data.price : 'Ready to Start'}</span>
+                        </div>
+                    </div>
+                    <button class="w-10 h-10 ${isUpcoming ? 'bg-slate-100 text-slate-800' : 'bg-white/20 text-white'} rounded-full flex items-center justify-center">
+                        <i class="fa ${isUpcoming ? 'fa-arrow-right' : 'fa-play'} text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
 
     </script>
 </body>
