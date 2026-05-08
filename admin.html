@@ -35,13 +35,13 @@
     <main class="max-w-7xl mx-auto p-8">
         <div class="mb-10">
             <h2 class="text-3xl font-extrabold text-slate-800">All Authenticated Users</h2>
-            <p class="text-slate-500 font-medium">List of all users who have signed in with Google.</p>
+            <p class="text-slate-500 font-medium">Firestore database se real-time user list.</p>
         </div>
 
         <!-- Loader -->
         <div id="loader" class="flex flex-col items-center justify-center py-24">
             <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
-            <p class="mt-4 text-slate-500 font-bold animate-pulse">Fetching users from database...</p>
+            <p class="mt-4 text-slate-500 font-bold animate-pulse">Fetching users from Firestore...</p>
         </div>
 
         <!-- Users Grid -->
@@ -63,7 +63,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         import { firebaseConfig, ADMIN_EMAIL } from './config.js';
 
@@ -83,22 +83,25 @@
                 window.location.href = "index.html"; 
                 return;
             }
-            loadStudents();
+            // Real-time listener setup
+            listenToUsers();
         });
 
-        async function loadStudents() {
-            try {
-                // Fetching all users from 'users' collection
-                const snapshot = await getDocs(collection(db, 'users'));
+        // Firestore se real-time data fetch karne ke liye
+        function listenToUsers() {
+            const usersRef = collection(db, 'users');
+            
+            // onSnapshot se data automatic update hoga jab bhi koi naya user login karega
+            onSnapshot(usersRef, (snapshot) => {
                 students = [];
                 snapshot.forEach(doc => {
                     students.push({ id: doc.id, ...doc.data() });
                 });
                 renderGrid();
-            } catch (err) {
-                console.error(err);
-                loader.innerHTML = `<p class="text-red-500 font-bold text-center">Error: ${err.message}.<br>Check if Firestore rules allow admin to read 'users' collection.</p>`;
-            }
+            }, (error) => {
+                console.error("Firestore Error:", error);
+                loader.innerHTML = `<p class="text-red-500 font-bold text-center">Permission Denied: Database rules check karein.</p>`;
+            });
         }
 
         function renderGrid() {
@@ -120,7 +123,7 @@
                     <div class="flex items-center gap-5 mb-6">
                         <img src="${s.photoURL || 'https://ui-avatars.com/api/?name='+s.displayName}" class="w-14 h-14 rounded-2xl shadow-sm">
                         <div class="overflow-hidden">
-                            <h3 class="font-bold text-slate-800 truncate">${s.displayName || 'Unknown Student'}</h3>
+                            <h3 class="font-bold text-slate-800 truncate">${s.displayName || 'Student'}</h3>
                             <p class="text-xs text-slate-400 truncate">${s.email}</p>
                         </div>
                     </div>
@@ -160,7 +163,7 @@
 
                 <div class="mt-8 pt-8 border-t border-slate-100 flex justify-between">
                     <div>
-                        <p class="text-[10px] font-black text-slate-300 uppercase">Last Seen</p>
+                        <p class="text-[10px] font-black text-slate-300 uppercase">Last Login</p>
                         <p class="text-xs font-bold text-slate-800">${s.lastLogin || 'Unknown'}</p>
                     </div>
                     <div class="text-right">
