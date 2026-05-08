@@ -9,170 +9,98 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdfeff; }
-        .user-gradient { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
-        .series-card:hover { transform: translateY(-5px); transition: 0.3s ease; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Top Navigation -->
-    <nav class="px-6 py-4 flex justify-between items-center border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <nav class="px-8 py-4 flex justify-between items-center border-b border-slate-100 bg-white sticky top-0 z-50">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <i class="fa fa-graduation-cap text-white text-sm"></i>
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                <i class="fa fa-graduation-cap"></i>
             </div>
             <span class="font-black text-slate-800">ExamMaster</span>
         </div>
         <div class="flex items-center gap-4">
-            <a href="store.html" class="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition-all">
-                <i class="fa fa-shopping-cart mr-1"></i> Buy Series
+            <a href="store.html" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-100">
+                <i class="fa fa-shopping-cart"></i> Buy Series
             </a>
-            <button id="logout-btn" class="text-slate-400 hover:text-red-500 transition-colors">
-                <i class="fa fa-sign-out-alt text-lg"></i>
-            </button>
+            <button id="logout-btn" class="text-slate-400 hover:text-red-500 font-bold"><i class="fa fa-sign-out-alt text-xl"></i></button>
         </div>
     </nav>
 
-    <!-- User Header Section -->
-    <header class="max-w-6xl mx-auto p-6 mt-6">
-        <div class="user-gradient rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-blue-100">
+    <header class="max-w-6xl mx-auto p-8">
+        <div class="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
             <div class="relative z-10">
-                <p class="text-blue-300 font-bold text-xs uppercase tracking-widest mb-2">Welcome Back 👋</p>
-                <h1 id="user-name" class="text-3xl md:text-5xl font-black mb-2">Student Name</h1>
-                <p id="user-email" class="text-slate-400 font-medium text-sm md:text-base italic">student@email.com</p>
-                
-                <div class="mt-8 flex gap-4">
-                    <div class="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
-                        <p class="text-[10px] text-slate-300 font-bold uppercase mb-1">Purchased</p>
-                        <p id="series-count" class="text-2xl font-black">0</p>
-                    </div>
+                <h1 id="disp-name" class="text-4xl font-black mb-1 italic">Student Name</h1>
+                <p id="disp-email" class="text-slate-400 text-sm font-medium">email@student.com</p>
+                <div class="mt-8 flex gap-3">
+                    <span class="bg-white/10 px-4 py-2 rounded-xl text-xs font-bold border border-white/10">
+                        My Courses: <span id="course-count">0</span>
+                    </span>
                 </div>
             </div>
-            <!-- Decorative circle -->
-            <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
         </div>
     </header>
 
-    <!-- Content Area -->
-    <main class="max-w-6xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-slate-800">My Test Series</h2>
-        </div>
+    <main class="max-w-6xl mx-auto p-8">
+        <h2 class="text-2xl font-black text-slate-800 mb-8">My Test Series</h2>
+        
+        <div id="loader" class="text-center py-20"><div class="animate-spin h-8 w-8 border-b-2 border-blue-600 mx-auto rounded-full"></div></div>
+        
+        <div id="series-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden"></div>
 
-        <!-- Loader -->
-        <div id="loader" class="py-20 text-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="text-slate-400 mt-4 font-medium">Loading your dashboard...</p>
-        </div>
-
-        <!-- Purchased Series List -->
-        <div id="purchased-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
-            <!-- Dynamic Cards -->
-        </div>
-
-        <!-- Empty State (No Series) -->
-        <div id="empty-state" class="hidden text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <i class="fa fa-folder-open text-slate-300 text-3xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">No Series Found</h3>
-            <p class="text-slate-500 mb-8 max-w-xs mx-auto">Aapne abhi tak koi test series nahi kharidi hai. Nayi series kharidne ke liye store par jayein.</p>
-            <a href="store.html" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition-transform inline-block shadow-xl">
-                Browse Store
-            </a>
+        <div id="empty-box" class="hidden text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+            <i class="fa fa-folder-open text-4xl text-slate-200 mb-4"></i>
+            <h3 class="text-lg font-bold text-slate-800">Koi Series Nahi Mili</h3>
+            <p class="text-slate-400 text-sm mb-6">Aapne abhi tak koi test series nahi kharidi hai.</p>
+            <a href="store.html" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold inline-block">Store Dekhein</a>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        import { firebaseConfig, ADMIN_EMAIL } from './config.js';
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
+            authDomain: "test-series-e94cf.firebaseapp.com",
+            projectId: "test-series-e94cf",
+            appId: "1:1089405186531:web:5c47280e47e5373bf4f0d6"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const loader = document.getElementById('loader');
-        const purchasedGrid = document.getElementById('purchased-grid');
-        const emptyState = document.getElementById('empty-state');
-        const userNameDisp = document.getElementById('user-name');
-        const userEmailDisp = document.getElementById('user-email');
-        const seriesCountDisp = document.getElementById('series-count');
-
         onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = "index.html";
-                return;
-            }
+            if (!user) { window.location.href = "index.html"; return; }
+            
+            document.getElementById('disp-name').innerText = user.displayName;
+            document.getElementById('disp-email').innerText = user.email;
 
-            // UI Update with User Info
-            userNameDisp.innerText = user.displayName || "Student";
-            userEmailDisp.innerText = user.email;
-
-            // Fetch Data from Firestore
-            fetchUserData(user);
-        });
-
-        async function fetchUserData(user) {
-            try {
-                const userRef = doc(db, 'users', user.uid);
-                const userSnap = await getDoc(userRef);
-
-                let userData;
-
-                if (!userSnap.exists()) {
-                    // Agar user naya hai, toh database mein entry banao
-                    userData = {
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        purchasedSeries: [],
-                        lastLogin: new Date().toLocaleString()
-                    };
-                    await setDoc(userRef, userData);
-                } else {
-                    userData = userSnap.data();
-                }
-
-                renderPurchasedSeries(userData.purchasedSeries || []);
-
-            } catch (err) {
-                console.error(err);
-                loader.innerHTML = `<p class="text-red-500">Error loading data. Check console.</p>`;
-            }
-        }
-
-        function renderPurchasedSeries(seriesList) {
-            loader.classList.add('hidden');
-            seriesCountDisp.innerText = seriesList.length;
+            const snap = await getDoc(doc(db, "users", user.uid));
+            const data = snap.data();
+            const seriesList = data.purchasedSeries || [];
+            
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('course-count').innerText = seriesList.length;
 
             if (seriesList.length === 0) {
-                emptyState.classList.remove('hidden');
-                purchasedGrid.classList.add('hidden');
+                document.getElementById('empty-box').classList.remove('hidden');
             } else {
-                emptyState.classList.add('hidden');
-                purchasedGrid.classList.remove('hidden');
-                purchasedGrid.innerHTML = '';
-
-                seriesList.forEach(series => {
-                    const card = document.createElement('div');
-                    card.className = "series-card bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col";
-                    card.innerHTML = `
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                            <i class="fa fa-file-alt text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-slate-800 text-lg mb-2">${series.name}</h3>
-                        <p class="text-slate-400 text-xs mb-6 font-medium">Valid until: ${series.expiryDate || 'Unlimited'}</p>
-                        <button class="mt-auto w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">
-                            Start Test
-                        </button>
-                    `;
-                    purchasedGrid.appendChild(card);
+                const grid = document.getElementById('series-grid');
+                grid.classList.remove('hidden');
+                seriesList.forEach(s => {
+                    grid.innerHTML += `
+                        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                            <h4 class="font-bold text-slate-800 mb-4">${s.name}</h4>
+                            <button class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">Start Test</button>
+                        </div>`;
                 });
             }
-        }
+        });
 
         document.getElementById('logout-btn').onclick = () => signOut(auth);
     </script>
