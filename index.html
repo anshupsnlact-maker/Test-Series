@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamMaster - Login</title>
+    <title>ExamMaster - Secure Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -19,12 +19,17 @@
         </div>
         
         <h1 class="text-3xl font-black text-slate-800 mb-2">ExamMaster</h1>
-        <p class="text-slate-400 mb-10 text-sm font-medium">Secure Test Series Portal</p>
+        <p class="text-slate-400 mb-10 text-sm font-medium">Test Series Mein Pravesh Karein</p>
         
         <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png" class="w-6 h-6">
-            <span>Sign In with Google</span>
+            <span>Google Se Login Karein</span>
         </button>
+        
+        <div id="loader" class="mt-6 hidden">
+            <div class="animate-spin h-6 w-6 border-b-2 border-blue-600 mx-auto rounded-full"></div>
+            <p class="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">Checking Account...</p>
+        </div>
         
         <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden"></p>
     </div>
@@ -32,8 +37,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Aapki Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
             authDomain: "test-series-e94cf.firebaseapp.com",
@@ -50,25 +56,49 @@
         const provider = new GoogleAuthProvider();
         const ADMIN_EMAIL = "anshupsnlact@gmail.com";
 
+        const loginBtn = document.getElementById('login-btn');
+        const loader = document.getElementById('loader');
+        const errorMsg = document.getElementById('error-msg');
+
         document.getElementById('login-btn').onclick = async () => {
+            loginBtn.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
             try {
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
 
-                // Auto-Register user in database
-                await setDoc(doc(db, "users", user.uid), {
-                    displayName: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    lastLogin: serverTimestamp(),
-                    purchasedSeries: [] // Initial empty list
-                }, { merge: true });
+                // CHECK IF USER EXISTS IN FIRESTORE
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (!userSnap.exists()) {
+                    // NEW USER: Create fresh record
+                    await setDoc(userRef, {
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        createdAt: serverTimestamp(),
+                        lastLogin: serverTimestamp(),
+                        purchasedSeries: [] // Empty array for multiple purchases
+                    });
+                    console.log("Naya User Register Hua!");
+                } else {
+                    // EXISTING USER: Only update last login time, don't touch purchasedSeries
+                    await setDoc(userRef, {
+                        lastLogin: serverTimestamp(),
+                        displayName: user.displayName, // Update if changed in Google
+                        photoURL: user.photoURL     // Update if changed in Google
+                    }, { merge: true });
+                    console.log("Purana User Load Hua!");
+                }
 
                 redirectUser(user.email);
             } catch (err) {
-                const errBox = document.getElementById('error-msg');
-                errBox.innerText = "Error: " + err.message;
-                errBox.classList.remove('hidden');
+                loader.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+                errorMsg.innerText = "Koshish Karein: " + err.message;
+                errorMsg.classList.remove('hidden');
             }
         };
 
@@ -80,6 +110,7 @@
             }
         }
 
+        // Auto-login check
         onAuthStateChanged(auth, (user) => {
             if (user) redirectUser(user.email);
         });
