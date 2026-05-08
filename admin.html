@@ -34,19 +34,19 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto p-8">
         <div class="mb-10">
-            <h2 class="text-3xl font-extrabold text-slate-800">Registered Students</h2>
-            <p class="text-slate-500 font-medium">Verify users and their purchase history in real-time.</p>
+            <h2 class="text-3xl font-extrabold text-slate-800">All Authenticated Users</h2>
+            <p class="text-slate-500 font-medium">List of all users who have signed in with Google.</p>
         </div>
 
         <!-- Loader -->
         <div id="loader" class="flex flex-col items-center justify-center py-24">
             <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
-            <p class="mt-4 text-slate-500 font-bold animate-pulse">Syncing with Firestore Database...</p>
+            <p class="mt-4 text-slate-500 font-bold animate-pulse">Fetching users from database...</p>
         </div>
 
         <!-- Users Grid -->
         <div id="user-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
-            <!-- Cards will be injected here -->
+            <!-- Cards injected here -->
         </div>
     </main>
 
@@ -79,7 +79,7 @@
         let students = [];
 
         onAuthStateChanged(auth, async (user) => {
-            if (!user || user.email !== ADMIN_EMAIL) {
+            if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
                 window.location.href = "index.html"; 
                 return;
             }
@@ -88,14 +88,16 @@
 
         async function loadStudents() {
             try {
-                // IMPORTANT: Make sure your collection name is 'users'
+                // Fetching all users from 'users' collection
                 const snapshot = await getDocs(collection(db, 'users'));
                 students = [];
-                snapshot.forEach(doc => students.push({ id: doc.id, ...doc.data() }));
+                snapshot.forEach(doc => {
+                    students.push({ id: doc.id, ...doc.data() });
+                });
                 renderGrid();
             } catch (err) {
                 console.error(err);
-                loader.innerHTML = `<p class="text-red-500 font-bold">Error: ${err.message}. Check Firestore Rules.</p>`;
+                loader.innerHTML = `<p class="text-red-500 font-bold text-center">Error: ${err.message}.<br>Check if Firestore rules allow admin to read 'users' collection.</p>`;
             }
         }
 
@@ -105,7 +107,7 @@
             userGrid.innerHTML = '';
 
             if (students.length === 0) {
-                userGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 font-medium">No students found in database.</div>';
+                userGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 font-medium">No authenticated users found.</div>';
                 return;
             }
 
@@ -116,16 +118,16 @@
                 
                 card.innerHTML = `
                     <div class="flex items-center gap-5 mb-6">
-                        <img src="${s.photoURL || 'https://ui-avatars.com/api/?name='+s.displayName}" class="w-14 h-14 rounded-2xl">
+                        <img src="${s.photoURL || 'https://ui-avatars.com/api/?name='+s.displayName}" class="w-14 h-14 rounded-2xl shadow-sm">
                         <div class="overflow-hidden">
-                            <h3 class="font-bold text-slate-800 truncate">${s.displayName || 'Unknown'}</h3>
+                            <h3 class="font-bold text-slate-800 truncate">${s.displayName || 'Unknown Student'}</h3>
                             <p class="text-xs text-slate-400 truncate">${s.email}</p>
                         </div>
                     </div>
                     <div class="pt-6 border-t border-slate-50 flex justify-between items-center">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">Test Series</span>
-                        <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-lg">
-                            ${(s.purchasedSeries || []).length} Purchased
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">Status</span>
+                        <span class="bg-green-50 text-green-600 text-[10px] font-black px-3 py-1 rounded-lg">
+                            AUTHENTICATED
                         </span>
                     </div>
                 `;
@@ -135,6 +137,7 @@
 
         window.showUserDetail = (idx) => {
             const s = students[idx];
+            const series = s.purchasedSeries || [];
             modalContent.innerHTML = `
                 <div class="text-center mb-8">
                     <img src="${s.photoURL || 'https://ui-avatars.com/api/?name='+s.displayName}" class="w-24 h-24 rounded-3xl mx-auto mb-4 shadow-xl border-4 border-white">
@@ -143,25 +146,26 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Active Subscriptions</h4>
+                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Ownership Details</h4>
+                    <p class="text-sm text-slate-600 font-medium">Series Purchased: <span class="text-blue-600 font-bold">${series.length}</span></p>
                     <div class="max-h-52 overflow-y-auto pr-2 space-y-2">
-                        ${(s.purchasedSeries || []).length > 0 ? s.purchasedSeries.map(item => `
+                        ${series.length > 0 ? series.map(item => `
                             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
                                 <p class="font-bold text-slate-700 text-sm">${item.name || 'Test Series'}</p>
-                                <span class="text-green-600 font-bold text-[10px] bg-green-50 px-2 py-1 rounded-lg">LIVE</span>
+                                <span class="text-green-600 font-bold text-[10px] bg-green-50 px-2 py-1 rounded-lg">ACTIVE</span>
                             </div>
-                        `).join('') : '<p class="text-slate-400 italic text-sm text-center py-4">No series purchased yet.</p>'}
+                        `).join('') : '<p class="text-slate-400 italic text-sm text-center py-4 bg-slate-50 rounded-xl">No active series purchases.</p>'}
                     </div>
                 </div>
 
                 <div class="mt-8 pt-8 border-t border-slate-100 flex justify-between">
                     <div>
-                        <p class="text-[10px] font-black text-slate-300 uppercase">Total Spent</p>
-                        <p class="text-xl font-black text-slate-800">₹${s.totalSpent || 0}</p>
+                        <p class="text-[10px] font-black text-slate-300 uppercase">Last Seen</p>
+                        <p class="text-xs font-bold text-slate-800">${s.lastLogin || 'Unknown'}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] font-black text-slate-300 uppercase">Student ID</p>
-                        <p class="text-xs font-bold text-slate-400 truncate w-32">${s.id}</p>
+                        <p class="text-[10px] font-black text-slate-300 uppercase">User UID</p>
+                        <p class="text-[10px] font-bold text-slate-400 truncate w-24 ml-auto">${s.id}</p>
                     </div>
                 </div>
             `;
