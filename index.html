@@ -26,7 +26,7 @@
         
         <!-- Login Button -->
         <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
-            <img src="google_logo.png" class="w-6 h-6">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png" class="w-6 h-6">
             <span>Sign In with Google</span>
         </button>
         
@@ -37,7 +37,7 @@
                 <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                 <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
             </div>
-            <p id="loader-text" class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Verifying Firestore Entry...</p>
+            <p id="loader-text" class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Configuring Profile Fields...</p>
         </div>
         
         <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl"></p>
@@ -75,47 +75,51 @@
         loginBtn.onclick = async () => {
             loginBtn.classList.add('hidden');
             loader.classList.remove('hidden');
-            statusText.innerText = "Connecting to Google...";
+            statusText.innerText = "Authorizing...";
             
             try {
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
 
-                loaderText.innerText = "Saving Data to Firestore...";
-                statusText.innerText = "Setting up your profile...";
+                loaderText.innerText = "Syncing Database Fields...";
+                statusText.innerText = "Preparing your dashboard...";
 
                 const userDocRef = doc(db, "users", user.uid);
-                
-                // DATA ENTRY PROCESS (Wait for Success)
-                await setDoc(userDocRef, {
+                const userSnap = await getDoc(userDocRef);
+
+                // Initial Data Structure
+                const userData = {
                     uid: user.uid,
                     displayName: user.displayName,
                     email: user.email,
                     photoURL: user.photoURL,
                     lastLogin: serverTimestamp(),
-                    // Use merge to preserve purchasedSeries if user already exists
-                }, { merge: true });
+                };
 
-                // Verify if it's a new user to initialize array
-                const userSnap = await getDoc(userDocRef);
-                if (!userSnap.data().purchasedSeries) {
-                    await setDoc(userDocRef, { purchasedSeries: [] }, { merge: true });
+                if (!userSnap.exists()) {
+                    // Agar naya user hai, toh purchasedSeries array add karein
+                    userData.accountCreated = serverTimestamp();
+                    userData.purchasedSeries = []; 
+                    await setDoc(userDocRef, userData);
+                } else {
+                    // Existing user ke liye purani purchasedSeries ko touch na karein
+                    await setDoc(userDocRef, userData, { merge: true });
                 }
 
-                // SUCCESS FEEDBACK
-                loaderText.innerText = "Data Saved Successfully!";
+                // Final Verification before Redirect
+                loaderText.innerText = "Ready to Go!";
                 iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
                 mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
                 
                 setTimeout(() => {
                     handleNavigation(user.email);
-                }, 1500); // 1.5 second wait for verification feel
+                }, 1200);
 
             } catch (err) {
-                console.error("Auth/Firestore Error:", err);
+                console.error("Critical Login Error:", err);
                 loginBtn.classList.remove('hidden');
                 loader.classList.add('hidden');
-                statusText.innerText = "Authentication Failed";
+                statusText.innerText = "Setup Incomplete";
                 errorMsg.innerText = "Error: " + err.message;
                 errorMsg.classList.remove('hidden');
             }
@@ -129,7 +133,6 @@
             }
         }
 
-        // On Page Load: Only redirect if already authenticated AND data exists
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userSnap = await getDoc(doc(db, "users", user.uid));
