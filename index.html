@@ -9,20 +9,20 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        .fade-in { animation: fadeIn 0.8s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="fade-in w-full max-w-sm bg-white p-10 rounded-[3rem] shadow-2xl text-center border border-slate-100">
-        <!-- Brand Icon -->
-        <div class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-200">
-            <i class="fa fa-graduation-cap text-white text-4xl"></i>
+        <!-- Logo -->
+        <div id="icon-container" class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-200 transition-all duration-500">
+            <i id="main-icon" class="fa fa-graduation-cap text-white text-4xl"></i>
         </div>
         
         <h1 class="text-3xl font-black text-slate-800 mb-2">ExamMaster</h1>
-        <p class="text-slate-400 mb-10 text-sm font-medium">Automatic Account Setup Portal</p>
+        <p id="status-text" class="text-slate-400 mb-10 text-sm font-medium">Please sign in to continue</p>
         
         <!-- Login Button -->
         <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
@@ -30,14 +30,14 @@
             <span>Sign In with Google</span>
         </button>
         
-        <!-- Processing State -->
+        <!-- Animated Loader -->
         <div id="loader" class="mt-8 hidden">
-            <div class="flex justify-center gap-1 mb-3">
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div class="flex justify-center space-x-2 mb-4">
+                <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
             </div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Creating Document Fields...</p>
+            <p id="loader-text" class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Verifying Firestore Entry...</p>
         </div>
         
         <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl"></p>
@@ -48,7 +48,6 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Your Firebase Configuration (Directly integrated as requested)
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
             authDomain: "test-series-e94cf.firebaseapp.com",
@@ -67,49 +66,56 @@
 
         const loginBtn = document.getElementById('login-btn');
         const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+        const statusText = document.getElementById('status-text');
+        const iconContainer = document.getElementById('icon-container');
+        const mainIcon = document.getElementById('main-icon');
         const errorMsg = document.getElementById('error-msg');
 
         loginBtn.onclick = async () => {
             loginBtn.classList.add('hidden');
             loader.classList.remove('hidden');
-            errorMsg.classList.add('hidden');
-
+            statusText.innerText = "Connecting to Google...";
+            
             try {
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
 
-                // AUTOMATIC SYSTEM: Create/Verify User Document in Firestore
-                const userDocRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userDocRef);
+                loaderText.innerText = "Saving Data to Firestore...";
+                statusText.innerText = "Setting up your profile...";
 
-                if (!userSnap.exists()) {
-                    // Document nahi hai, isliye fields ke saath naya document banega
-                    await setDoc(userDocRef, {
-                        uid: user.uid,
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        purchasedSeries: [], // Automatic blank array
-                        accountCreated: serverTimestamp(),
-                        lastLogin: serverTimestamp(),
-                        role: user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "student"
-                    });
-                    console.log("New document fields created successfully!");
-                } else {
-                    // Document hai, toh sirf login time aur basic info update hogi
-                    await setDoc(userDocRef, {
-                        lastLogin: serverTimestamp(),
-                        displayName: user.displayName,
-                        photoURL: user.photoURL
-                    }, { merge: true });
-                    console.log("Existing document updated!");
+                const userDocRef = doc(db, "users", user.uid);
+                
+                // DATA ENTRY PROCESS (Wait for Success)
+                await setDoc(userDocRef, {
+                    uid: user.uid,
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    lastLogin: serverTimestamp(),
+                    // Use merge to preserve purchasedSeries if user already exists
+                }, { merge: true });
+
+                // Verify if it's a new user to initialize array
+                const userSnap = await getDoc(userDocRef);
+                if (!userSnap.data().purchasedSeries) {
+                    await setDoc(userDocRef, { purchasedSeries: [] }, { merge: true });
                 }
 
-                handleNavigation(user.email);
+                // SUCCESS FEEDBACK
+                loaderText.innerText = "Data Saved Successfully!";
+                iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
+                mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
+                
+                setTimeout(() => {
+                    handleNavigation(user.email);
+                }, 1500); // 1.5 second wait for verification feel
+
             } catch (err) {
-                console.error("Firestore Entry Error:", err);
+                console.error("Auth/Firestore Error:", err);
                 loginBtn.classList.remove('hidden');
                 loader.classList.add('hidden');
+                statusText.innerText = "Authentication Failed";
                 errorMsg.innerText = "Error: " + err.message;
                 errorMsg.classList.remove('hidden');
             }
@@ -123,9 +129,14 @@
             }
         }
 
-        // Auto-login logic
-        onAuthStateChanged(auth, (user) => {
-            if (user) handleNavigation(user.email);
+        // On Page Load: Only redirect if already authenticated AND data exists
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userSnap = await getDoc(doc(db, "users", user.uid));
+                if (userSnap.exists()) {
+                    handleNavigation(user.email);
+                }
+            }
         });
     </script>
 </body>
