@@ -9,66 +9,67 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        .user-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #f1f5f9; }
+        .user-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #f1f5f9; position: relative; }
         .user-card:hover { transform: translateY(-8px); border-color: #3b82f6; box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1); }
         .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
-        .profile-img-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .profile-img-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+        .status-badge { position: absolute; top: 1.5rem; right: 1.5rem; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Navigation -->
+    <!-- Navigation Bar -->
     <nav class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 md:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100">
                 <i class="fa fa-graduation-cap text-white text-xl"></i>
             </div>
-            <h1 class="text-xl font-black text-slate-800 tracking-tight">Admin Portal</h1>
+            <h1 class="text-xl font-black text-slate-800 tracking-tight">Management Console</h1>
         </div>
 
         <div class="flex items-center gap-2 md:gap-4">
-            <button onclick="window.location.href='view_series.html'" class="flex items-center gap-2 bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-200 transition-all">
+            <button onclick="window.location.href='view_series.html'" class="flex items-center gap-2 bg-slate-100 text-slate-700 font-bold text-xs px-5 py-3 rounded-xl hover:bg-slate-200 transition-all">
                 <i class="fa fa-layer-group"></i> <span class="hidden sm:inline">Existing Series</span>
             </button>
-            <button onclick="window.location.href='create_series.html'" class="flex items-center gap-2 bg-blue-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
-                <i class="fa fa-plus-circle"></i> <span class="hidden sm:inline">Create Series</span>
+            <button onclick="window.location.href='create_series.html'" class="flex items-center gap-2 bg-blue-600 text-white font-bold text-xs px-5 py-3 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+                <i class="fa fa-plus-circle"></i> <span class="hidden sm:inline">Launch New Series</span>
             </button>
-            <button id="logout-btn" class="text-red-500 font-bold text-xs hover:bg-red-50 px-4 py-2.5 rounded-xl transition-all border border-transparent hover:border-red-100">
-                <i class="fa fa-sign-out-alt"></i>
+            <button id="logout-btn" class="text-red-500 font-bold text-xs hover:bg-red-50 px-4 py-3 rounded-xl transition-all border border-transparent hover:border-red-100">
+                <i class="fa fa-power-off text-lg"></i>
             </button>
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto p-6 md:p-10">
         <div class="mb-12">
-            <h2 class="text-4xl font-black text-slate-900 tracking-tight">Registered Users</h2>
-            <p class="text-slate-500 font-medium mt-2">Manage student access and subscription details below.</p>
+            <h2 class="text-4xl font-black text-slate-900 tracking-tight">User Directory</h2>
+            <p class="text-slate-500 font-medium mt-2">Monitor system users, manage access levels, and audit subscriptions.</p>
         </div>
 
-        <!-- Loader -->
+        <!-- Loading State -->
         <div id="loader" class="flex flex-col items-center justify-center py-32">
             <div class="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <p class="mt-6 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Loading Database...</p>
+            <p class="mt-6 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Synchronizing Records...</p>
         </div>
 
-        <!-- Users Grid (3 columns on desktop) -->
+        <!-- Grid Layout -->
         <div id="user-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
-            <!-- Cards will be injected here -->
+            <!-- Dynamic User Cards -->
         </div>
     </main>
 
-    <!-- Detail Modal -->
+    <!-- Detailed Modal -->
     <div id="user-modal" class="fixed inset-0 modal-overlay hidden items-center justify-center p-4 z-[100]">
-        <div class="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden relative border border-white/20 animate-fade-in-up">
+        <div class="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden relative border border-white/20">
             <button onclick="closeModal()" class="absolute top-8 right-8 text-slate-300 hover:text-slate-800 transition-colors z-10">
                 <i class="fa fa-times-circle text-3xl"></i>
             </button>
             
             <div id="modal-content" class="p-10">
-                <!-- Content injected via JS -->
+                <!-- User Data Injected Here -->
             </div>
         </div>
     </div>
@@ -76,7 +77,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
@@ -105,10 +106,10 @@
                 window.location.href = "index.html";
                 return;
             }
-            fetchAllUsers();
+            fetchUserDirectory();
         });
 
-        function fetchAllUsers() {
+        function fetchUserDirectory() {
             onSnapshot(collection(db, "users"), (snapshot) => {
                 studentsData = [];
                 userGrid.innerHTML = '';
@@ -118,28 +119,31 @@
                 snapshot.forEach((doc) => {
                     const data = { uid: doc.id, ...doc.data() };
                     studentsData.push(data);
-                    renderCard(data, studentsData.length - 1);
+                    renderUserCard(data, studentsData.length - 1);
                 });
             });
         }
 
-        function renderCard(user, index) {
+        function renderUserCard(user, index) {
             const card = document.createElement('div');
-            card.className = "user-card bg-white p-8 rounded-[2.5rem] cursor-pointer text-center flex flex-col items-center";
-            card.onclick = () => openUserDetail(index);
+            const isDisabled = user.status === 'disabled';
+            card.className = `user-card bg-white p-8 rounded-[2.5rem] cursor-pointer text-center flex flex-col items-center ${isDisabled ? 'opacity-70 grayscale' : ''}`;
+            card.onclick = () => openProfile(index);
 
             card.innerHTML = `
+                <div class="status-badge">
+                    <span class="w-3 h-3 rounded-full inline-block ${isDisabled ? 'bg-red-500' : 'bg-green-500'}"></span>
+                </div>
                 <div class="relative mb-6">
                     <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" 
-                         class="w-24 h-24 rounded-[2rem] object-cover border-4 border-slate-50 profile-img-glow">
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+                         class="w-24 h-24 rounded-[2.2rem] object-cover border-4 border-slate-50 profile-img-glow">
                 </div>
-                <h3 class="font-bold text-slate-800 text-xl mb-1 truncate w-full">${user.displayName || 'User'}</h3>
+                <h3 class="font-bold text-slate-800 text-xl mb-1 truncate w-full">${user.displayName || 'Unnamed User'}</h3>
                 <p class="text-sm text-slate-400 font-medium truncate w-full mb-6">${user.email}</p>
                 
                 <div class="w-full pt-6 border-t border-slate-50 flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Status</span>
-                    <span class="bg-blue-50 text-blue-600 text-[10px] font-black px-3 py-1 rounded-full uppercase">
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">${isDisabled ? 'Suspended' : 'Verified Student'}</span>
+                    <span class="${isDisabled ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'} text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">
                         ${user.purchasedSeries ? user.purchasedSeries.length : 0} Assets
                     </span>
                 </div>
@@ -147,58 +151,68 @@
             userGrid.appendChild(card);
         }
 
-        window.openUserDetail = (index) => {
+        window.openProfile = (index) => {
             const u = studentsData[index];
             const purchases = u.purchasedSeries || [];
+            const isDisabled = u.status === 'disabled';
 
             modalContent.innerHTML = `
                 <div class="flex flex-col items-center text-center mb-10">
                     <img src="${u.photoURL}" class="w-28 h-28 rounded-[2.5rem] shadow-xl mb-6 border-4 border-white">
                     <h2 class="text-3xl font-black text-slate-800 mb-1">${u.displayName}</h2>
                     <p class="text-slate-400 font-bold text-sm tracking-wide mb-4">${u.email}</p>
-                    <div class="flex gap-2">
-                         <span class="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-tighter">UID: ${u.uid.substring(0, 8)}...</span>
-                    </div>
+                    <div class="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-tighter">Reference ID: ${u.uid}</div>
                 </div>
 
                 <div class="space-y-6">
                     <div>
-                        <p class="text-[10px] font-black text-slate-300 uppercase mb-3 tracking-widest">Active Subscriptions</p>
+                        <p class="text-[10px] font-black text-slate-300 uppercase mb-3 tracking-widest">Enrollment Details</p>
                         <div class="max-h-40 overflow-y-auto space-y-3 pr-2">
                             ${purchases.length > 0 ? purchases.map(p => `
                                 <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center">
-                                    <span class="text-xs font-bold text-slate-700">${p.name || 'Test Series'}</span>
-                                    <i class="fa fa-check-circle text-green-500 text-sm"></i>
+                                    <span class="text-xs font-bold text-slate-700">${p.name || 'Educational Module'}</span>
+                                    <span class="text-[9px] font-bold text-blue-500 uppercase">Paid</span>
                                 </div>
-                            `).join('') : '<p class="text-slate-400 text-xs italic text-center py-4">No subscriptions found</p>'}
+                            `).join('') : '<div class="py-6 text-center text-slate-300 text-xs font-bold uppercase tracking-widest border border-dashed rounded-2xl">No Active Subscriptions</div>'}
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
-                        <button class="bg-slate-100 text-slate-400 font-black text-[10px] py-4 rounded-2xl uppercase tracking-widest cursor-not-allowed opacity-50">
-                            Disable Account
+                        <button onclick="toggleUserStatus('${u.uid}', '${isDisabled ? 'active' : 'disabled'}')" 
+                                class="${isDisabled ? 'bg-green-50 text-green-600 hover:bg-green-600' : 'bg-orange-50 text-orange-600 hover:bg-orange-600'} hover:text-white font-black text-[10px] py-4 rounded-2xl uppercase tracking-widest transition-all">
+                            ${isDisabled ? 'Enable Account' : 'Disable Account'}
                         </button>
-                        <button onclick="deleteUserAccount('${u.uid}')" class="bg-red-50 text-red-600 font-black text-[10px] py-4 rounded-2xl uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
+                        <button onclick="removeUserAccount('${u.uid}')" class="bg-red-50 text-red-600 font-black text-[10px] py-4 rounded-2xl uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
                             Delete Account
                         </button>
                     </div>
 
-                    <p class="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest mt-4">
-                        Action is permanent and cannot be undone
+                    <p class="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest mt-4">
+                        Caution: Deletion is permanent and irreversible
                     </p>
                 </div>
             `;
             userModal.classList.replace('hidden', 'flex');
         };
 
-        window.deleteUserAccount = async (uid) => {
-            if(confirm("Kya aap sach mein is account ko delete karna chahte hain? Ye wapas nahi aayega!")) {
+        window.toggleUserStatus = async (uid, newStatus) => {
+            try {
+                const userDoc = doc(db, "users", uid);
+                await updateDoc(userDoc, { status: newStatus });
+                closeModal();
+            } catch (error) {
+                console.error("Status Update Failed:", error);
+            }
+        };
+
+        window.removeUserAccount = async (uid) => {
+            const confirmDelete = confirm("Warning: You are about to permanently delete this account. Proceed?");
+            if(confirmDelete) {
                 try {
                     await deleteDoc(doc(db, "users", uid));
                     closeModal();
-                    // onSnapshot automatic update kar dega grid ko
                 } catch (error) {
-                    alert("Delete karne mein error aaya: " + error.message);
+                    console.error("Delete Operation Failed:", error);
                 }
             }
         };
