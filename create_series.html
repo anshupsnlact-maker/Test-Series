@@ -35,7 +35,7 @@
         <button onclick="window.location.href='index.html'" id="back-btn" class="mt-8 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs hidden">Back to Login</button>
     </div>
 
-    <div id="main-content" class="invisible">
+    <div id="main-content">
         <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <button onclick="window.location.href='admin.html'" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center hover:bg-slate-200 transition-all">
@@ -176,7 +176,7 @@
 
                 <div class="flex justify-end gap-4">
                     <button type="button" onclick="window.location.href='admin.html'" class="bg-slate-200 text-slate-600 font-bold px-8 py-4 rounded-2xl hover:bg-slate-300 transition-all">Discard</button>
-                    <button type="submit" id="submitBtn" class="btn-primary flex items-center gap-3">
+                    <button type="submit" id="submitBtn" disabled class="btn-primary flex items-center gap-3 opacity-60 cursor-not-allowed">
                         <i class="fa fa-bolt"></i>
                         Initialize Deployment
                     </button>
@@ -221,17 +221,91 @@
         const mainContent = document.getElementById('main-content');
         const backBtn = document.getElementById('back-btn');
 
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                accessDenied.classList.add('hidden');
-                mainContent.classList.remove('invisible');
-            } else {
-                accessDenied.querySelector('p').innerText = "Access Blocked: Unauthorised Admin Email.";
-                accessDenied.querySelector('h2').innerText = "Auth Error";
-                backBtn.classList.remove('hidden');
-                mainContent.innerHTML = "";
-            }
-        });
+        let adminVerified = false;
+
+// Elements
+const adminBadge = document.getElementById('admin-badge');
+
+// Cached login check
+const cachedUser = auth.currentUser;
+
+// Instant UI load
+if (
+    cachedUser &&
+    cachedUser.email &&
+    cachedUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+) {
+    
+    accessDenied.classList.add('hidden');
+    mainContent.classList.remove('invisible');
+    
+} else {
+    
+    showAccessDenied("Invalid Session");
+}
+
+// Background verification
+onAuthStateChanged(auth, async (user) => {
+    
+    if (!user) {
+        
+        showAccessDenied("Session Expired");
+        
+        return;
+    }
+    
+    if (
+        user.email.toLowerCase() !==
+        ADMIN_EMAIL.toLowerCase()
+    ) {
+        
+        showAccessDenied("Unauthorized Admin");
+        
+        return;
+    }
+    
+    try {
+        
+        // Force secure token verification
+        await user.getIdToken(true);
+        
+        adminVerified = true;
+        
+        // Enable submit button
+        submitBtn.disabled = false;
+        
+        submitBtn.classList.remove(
+            'opacity-60',
+            'cursor-not-allowed'
+        );
+        
+        adminBadge.innerText = "Auth: Verified";
+        
+    } catch (error) {
+        
+        console.error(error);
+        
+        showAccessDenied(
+            "Database Verification Failed"
+        );
+    }
+});
+
+// Access denied function
+function showAccessDenied(message) {
+    
+    accessDenied.classList.remove('hidden');
+    
+    accessDenied.querySelector('h2').innerText =
+        "Access Denied";
+    
+    accessDenied.querySelector('p').innerText =
+        message;
+    
+    backBtn.classList.remove('hidden');
+    
+    mainContent.innerHTML = "";
+}
 
         const form = document.getElementById('series-form');
         const mrpInput = document.getElementById('mrpPrice');
@@ -246,6 +320,14 @@
         };
 
         form.onsubmit = async (e) => {
+            if (!adminVerified) {
+
+    alert(
+        "Please wait for admin verification."
+    );
+
+    return;
+}
             e.preventDefault();
             
             // Re-verify auth before sending data to Firestore
@@ -296,9 +378,12 @@
                     alert("Error: " + err.message);
                 }
                 submitBtn.disabled = false;
-                submitBtn.innerText = "Initialize Deployment";
+                submitBtn.innerHTML = `
+    <i class="fa fa-bolt"></i>
+    Initialize Deployment
+`;
             }
         };
     </script>
 </body>
-</html>
+    </html>
