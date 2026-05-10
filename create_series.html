@@ -176,7 +176,7 @@
 
                 <div class="flex justify-end gap-4">
                     <button type="button" onclick="window.location.href='admin.html'" class="bg-slate-200 text-slate-600 font-bold px-8 py-4 rounded-2xl hover:bg-slate-300 transition-all">Discard</button>
-                    <button type="submit" id="submitBtn" disabled class="btn-primary flex items-center gap-3 opacity-60 cursor-not-allowed">
+                    <button type="submit" id="submitBtn" class="btn-primary flex items-center gap-3">
                         <i class="fa fa-bolt"></i>
                         Initialize Deployment
                     </button>
@@ -221,104 +221,17 @@
         const mainContent = document.getElementById('main-content');
         const backBtn = document.getElementById('back-btn');
 
-        // Hide security screen initially
-accessDenied.classList.add('hidden');
-
-// Verification state
-let adminVerified = false;
-
-// Previous page cached login check
-const cachedUser = auth.currentUser;
-
-// STEP 1
-// Instant email verification
-if (
-    cachedUser &&
-    cachedUser.email &&
-    cachedUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
-) {
-
-    // Instantly open page
-    mainContent.classList.remove('invisible');
-
-} else {
-
-    // Invalid previous session
-    showAccessDenied("Invalid Session");
-}
-
-// STEP 2
-// Background Firebase verification
-onAuthStateChanged(auth, async (user) => {
-
-    // Session lost
-    if (!user) {
-
-        showAccessDenied("Session Expired");
-
-        return;
-    }
-
-    // Wrong admin
-    if (
-        user.email.toLowerCase() !==
-        ADMIN_EMAIL.toLowerCase()
-    ) {
-
-        showAccessDenied("Unauthorized Admin");
-
-        return;
-    }
-
-    try {
-
-        // Secure verification
-        await user.getIdToken(true);
-
-        // Verified successfully
-        adminVerified = true;
-
-        // Enable submit button
-        submitBtn.disabled = false;
-
-        submitBtn.classList.remove(
-            'opacity-60',
-            'cursor-not-allowed'
-        );
-
-        submitBtn.innerHTML = `
-            <i class="fa fa-bolt"></i>
-            Initialize Deployment
-        `;
-
-        // Update badge
-        document.getElementById('admin-badge').innerText =
-            "Auth: Verified";
-
-    } catch (error) {
-
-        console.error(error);
-
-        showAccessDenied("Database Verification Failed");
-    }
-
-});
-
-// Access denied function
-function showAccessDenied(message) {
-
-    accessDenied.classList.remove('hidden');
-
-    accessDenied.querySelector('h2').innerText =
-        "Access Denied";
-
-    accessDenied.querySelector('p').innerText =
-        message;
-
-    backBtn.classList.remove('hidden');
-
-    mainContent.innerHTML = "";
-}
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                accessDenied.classList.add('hidden');
+                mainContent.classList.remove('invisible');
+            } else {
+                accessDenied.querySelector('p').innerText = "Access Blocked: Unauthorised Admin Email.";
+                accessDenied.querySelector('h2').innerText = "Auth Error";
+                backBtn.classList.remove('hidden');
+                mainContent.innerHTML = "";
+            }
+        });
 
         const form = document.getElementById('series-form');
         const mrpInput = document.getElementById('mrpPrice');
@@ -333,12 +246,6 @@ function showAccessDenied(message) {
         };
 
         form.onsubmit = async (e) => {
-            if (!adminVerified) {
-
-    alert("Please wait for admin verification.");
-
-    return;
-}
             e.preventDefault();
             
             // Re-verify auth before sending data to Firestore
@@ -394,4 +301,4 @@ function showAccessDenied(message) {
         };
     </script>
 </body>
-                                                  </html>
+</html>
