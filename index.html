@@ -4,424 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamMaster - Secure Login</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f8fafc;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="fade-in w-full max-w-sm bg-white p-10 rounded-[3rem] shadow-2xl text-center border border-slate-100">
-
-        <!-- Logo -->
-        <div id="icon-container"
-            class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-200 transition-all duration-500">
-
+        <!-- Logo Icon -->
+        <div id="icon-container" class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-200 transition-all duration-500">
             <i id="main-icon" class="fa fa-graduation-cap text-white text-4xl"></i>
         </div>
-
-        <!-- Title -->
-        <h1 class="text-3xl font-black text-slate-800 mb-2">
-            ExamMaster
-        </h1>
-
-        <!-- Status -->
-        <p id="status-text"
-            class="text-slate-400 mb-10 text-sm font-medium">
-            Please sign in to continue
-        </p>
-
-        <!-- Login Button -->
-        <button id="login-btn"
-            class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
-
-            <img src="google_logo.png"
-                class="w-6 h-6"
-                onerror="this.src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png'">
-
+        
+        <h1 class="text-3xl font-black text-slate-800 mb-2">ExamMaster</h1>
+        <p id="status-text" class="text-slate-400 mb-10 text-sm font-medium">Redirecting to browser for secure login</p>
+        
+        <!-- Login Button with Local Image Asset -->
+        <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
+            <img src="google_logo.png" class="w-6 h-6" alt="Google">
             <span>Login with Google</span>
-
         </button>
-
-        <!-- Loader -->
+        
+        <!-- Animated Loader for Redirect -->
         <div id="loader" class="mt-8 hidden">
-
             <div class="flex justify-center space-x-2 mb-4">
-
                 <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
-
                 <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-
                 <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-
             </div>
-
-            <p id="loader-text"
-                class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-
-                Authenticating...
-
-            </p>
-
+            <p id="loader-text" class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Opening Browser...</p>
         </div>
-
-        <!-- Error -->
-        <p id="error-msg"
-            class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl">
-        </p>
-
-        <!-- User Profile -->
-        <div id="user-profile" class="hidden mt-8">
-
-            <img id="user-photo"
-                class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-blue-100">
-
-            <h2 id="user-name"
-                class="text-xl font-black text-slate-800">
-            </h2>
-
-            <p id="user-email"
-                class="text-sm text-slate-500 mt-1">
-            </p>
-
-            <div class="mt-6 bg-green-50 text-green-600 font-bold py-4 rounded-2xl">
-                Login Successful ✅
-            </div>
-
-        </div>
-
+        
+        <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl"></p>
     </div>
 
     <script type="module">
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-        import {
-            getAuth,
-            signInWithPopup,
-            GoogleAuthProvider,
-            onAuthStateChanged
+        import { 
+            getAuth, 
+            signInWithRedirect, 
+            getRedirectResult, 
+            GoogleAuthProvider, 
+            onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        import {
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc,
-            serverTimestamp
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-
-
-        // Firebase Config
+        // Aapki Firebase Configuration
         const firebaseConfig = {
-
             apiKey: "AIzaSyAZMtyDal6GIvuwCWojzyWUe5DWiKfFGHc",
-
             authDomain: "test-series-e94cf.firebaseapp.com",
-
             projectId: "test-series-e94cf",
-
             storageBucket: "test-series-e94cf.firebasestorage.app",
-
             messagingSenderId: "1089405186531",
-
             appId: "1:1089405186531:web:5c47280e47e5373bf4f0d6",
-
             measurementId: "G-C25TJCVEJK"
-
         };
 
-
-
-        // Initialize
         const app = initializeApp(firebaseConfig);
-
         const auth = getAuth(app);
-
         const db = getFirestore(app);
-
         const provider = new GoogleAuthProvider();
+        
+        // Isse user ko browser mein hamesha account selection ka menu dikhega
+        provider.setCustomParameters({ prompt: 'select_account' });
 
-
-
-        // Always show account chooser popup
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
-
-
-
-        // Elements
         const loginBtn = document.getElementById('login-btn');
-
         const loader = document.getElementById('loader');
-
         const loaderText = document.getElementById('loader-text');
-
         const statusText = document.getElementById('status-text');
-
         const iconContainer = document.getElementById('icon-container');
-
         const mainIcon = document.getElementById('main-icon');
-
         const errorMsg = document.getElementById('error-msg');
 
-        const userProfile = document.getElementById('user-profile');
-
-        const userPhoto = document.getElementById('user-photo');
-
-        const userName = document.getElementById('user-name');
-
-        const userEmail = document.getElementById('user-email');
-
-
-
-        // Admin Email
         const ADMIN_EMAIL = "anshupsnlact@gmail.com";
 
-
-
-        // Login
-        loginBtn.onclick = async () => {
-
-            errorMsg.classList.add('hidden');
-
+        // Login handle karne ke liye function
+        loginBtn.onclick = () => {
             loginBtn.classList.add('hidden');
-
             loader.classList.remove('hidden');
-
-            statusText.innerText = "Opening Google Sign-In...";
-
-            try {
-
-                // Popup Login
-                const result = await signInWithPopup(auth, provider);
-
-                const user = result.user;
-
-                loaderText.innerText = "Finalizing Database Entry...";
-
-
-
-                // Firestore User Reference
-                const userDocRef = doc(db, "users", user.uid);
-
-                const userSnap = await getDoc(userDocRef);
-
-
-
-                // User Data
-                const userData = {
-
-                    uid: user.uid,
-
-                    displayName: user.displayName,
-
-                    email: user.email,
-
-                    photoURL: user.photoURL,
-
-                    lastLogin: serverTimestamp(),
-
-                };
-
-
-
-                // New User
-                if (!userSnap.exists()) {
-
-                    userData.accountCreated = serverTimestamp();
-
-                    userData.purchasedSeries = [];
-
-                    await setDoc(userDocRef, userData);
-
-                }
-
-                else {
-
-                    await setDoc(userDocRef, userData, {
-                        merge: true
-                    });
-
-                }
-
-
-
-                // Success Animation
-                iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
-
-                mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
-
-                loaderText.innerText = "Verified Successfully...";
-
-
-
-                // SAME PAGE PROFILE SHOW
-                setTimeout(() => {
-
-                    loader.classList.add('hidden');
-
-                    statusText.innerText = "Welcome Back";
-
-
-
-                    userProfile.classList.remove('hidden');
-
-
-
-                    userPhoto.src = user.photoURL;
-
-                    userName.innerText = user.displayName;
-
-                    userEmail.innerText = user.email;
-
-
-
-                    // Admin detection
-                    if (
-                        user.email.toLowerCase() ===
-                        ADMIN_EMAIL.toLowerCase()
-                    ) {
-
-                        statusText.innerText =
-                            "Admin Account Logged In";
-
-                    } else {
-
-                        statusText.innerText =
-                            "Student Account Logged In";
-
-                    }
-
-                }, 1200);
-
-
-
-            } catch (err) {
-
-                console.error("Popup Error:", err);
-
-
-
-                loader.classList.add('hidden');
-
-                loginBtn.classList.remove('hidden');
-
-
-
-                statusText.innerText = "Login Interrupted";
-
-
-
-                // Agar popup block ya cancel hua
-                if (
-                    err.code === "auth/popup-blocked" ||
-                    err.code === "auth/popup-closed-by-user"
-                ) {
-
-                    window.location.href =
-                        "https://accounts.google.com/";
-
-                }
-
-
-
-                errorMsg.innerText =
-                    "Error: " + err.message;
-
-                errorMsg.classList.remove('hidden');
-
-            }
-
+            statusText.innerText = "Connecting to Google Accounts...";
+            
+            // Forcefully browser mein le jaane ke liye
+            signInWithRedirect(auth, provider);
         };
 
-
-
-        // Auto Login Check
-        onAuthStateChanged(auth, async (user) => {
-
-            if (user) {
-
-                const userDocRef =
-                    doc(db, "users", user.uid);
-
-                const userSnap =
-                    await getDoc(userDocRef);
-
-
-
-                if (userSnap.exists()) {
-
-                    loginBtn.classList.add('hidden');
-
-
-
-                    iconContainer.classList.replace(
-                        'bg-blue-600',
-                        'bg-green-500'
-                    );
-
-
-
-                    mainIcon.classList.replace(
-                        'fa-graduation-cap',
-                        'fa-check'
-                    );
-
-
-
-                    statusText.innerText =
-                        "Already Logged In";
-
-
-
-                    userProfile.classList.remove('hidden');
-
-
-
-                    userPhoto.src = user.photoURL;
-
-                    userName.innerText =
-                        user.displayName;
-
-                    userEmail.innerText =
-                        user.email;
-
+        // Browser se wapas aane par result check karna
+        async function checkRedirectResponse() {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    await finalizeUserData(result.user);
                 }
+            } catch (err) {
+                console.error("Redirect Error:", err);
+                errorMsg.innerText = "Login Failed: " + err.message;
+                errorMsg.classList.remove('hidden');
+                loginBtn.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
 
+        // Firestore data sync logic
+        async function finalizeUserData(user) {
+            loader.classList.remove('hidden');
+            loaderText.innerText = "Saving Profile to Database...";
+            
+            const userDocRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userDocRef);
+
+            const userData = {
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                lastLogin: serverTimestamp(),
+            };
+
+            if (!userSnap.exists()) {
+                userData.accountCreated = serverTimestamp();
+                userData.purchasedSeries = [];
+                await setDoc(userDocRef, userData);
+            } else {
+                await setDoc(userDocRef, userData, { merge: true });
             }
 
+            // Success feedback
+            iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
+            mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
+            loaderText.innerText = "Success! Redirecting...";
+
+            setTimeout(() => {
+                navigateUser(user.email);
+            }, 1000);
+        }
+
+        function navigateUser(email) {
+            if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                window.location.href = "admin.html";
+            } else {
+                window.location.href = "home.html";
+            }
+        }
+
+        // Initialize redirect handling
+        checkRedirectResponse();
+
+        // Check active session
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userSnap = await getDoc(doc(db, "users", user.uid));
+                if (userSnap.exists()) {
+                    navigateUser(user.email);
+                }
+            }
         });
-
     </script>
-
 </body>
-    </html>
+</html>
