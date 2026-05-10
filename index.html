@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,17 +25,11 @@
         <h1 class="text-3xl font-black text-slate-800 mb-2">ExamMaster</h1>
         <p id="status-text" class="text-slate-400 mb-10 text-sm font-medium">Please sign in to continue</p>
         
-        <!-- Login Button -->
+        <!-- Login Button with Local Image -->
         <button id="login-btn" class="w-full flex items-center justify-center gap-4 bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl">
-            <img src="google_logo.png" class="w-6 h-6" alt="Google" onerror="this.src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png'">
+            <img src="google_logo.png" class="w-6 h-6" onerror="this.src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa_google_main_logo.png'">
             <span>Login with Google</span>
         </button>
-        
-        <!-- Support Button (Only visible if disabled) -->
-        <a id="support-btn" href="mailto:support@exammaster.com" class="mt-4 w-full hidden flex items-center justify-center gap-4 bg-blue-50 text-blue-600 font-bold py-5 rounded-2xl border border-blue-100 transition-all active:scale-95">
-            <i class="fa fa-envelope"></i>
-            <span>Contact Support</span>
-        </a>
         
         <!-- Processing State -->
         <div id="loader" class="mt-8 hidden">
@@ -46,16 +41,14 @@
             <p id="loader-text" class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Authenticating...</p>
         </div>
         
-        <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl leading-relaxed"></p>
+        <p id="error-msg" class="mt-6 text-red-500 text-xs font-bold hidden bg-red-50 p-4 rounded-2xl"></p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
             getAuth, 
-            signInWithRedirect, 
-            getRedirectResult,
-            signOut,
+            signInWithPopup, 
             GoogleAuthProvider, 
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -81,10 +74,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+        
+        // Isse accounts ki list show hogi
         provider.setCustomParameters({ prompt: 'select_account' });
 
         const loginBtn = document.getElementById('login-btn');
-        const supportBtn = document.getElementById('support-btn');
         const loader = document.getElementById('loader');
         const loaderText = document.getElementById('loader-text');
         const statusText = document.getElementById('status-text');
@@ -94,112 +88,74 @@
 
         const ADMIN_EMAIL = "anshupsnlact@gmail.com";
 
-        loginBtn.onclick = () => {
+        loginBtn.onclick = async () => {
             loginBtn.classList.add('hidden');
             loader.classList.remove('hidden');
-            statusText.innerText = "Redirecting to Google...";
-            signInWithRedirect(auth, provider);
+            statusText.innerText = "Opening Google Sign-In...";
+            
+            try {
+                // Popup menu jo website ke upar hi khulega
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                loaderText.innerText = "Finalizing Database Entry...";
+                
+                const userDocRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userDocRef);
+
+                const userData = {
+                    uid: user.uid,
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    lastLogin: serverTimestamp(),
+                };
+
+                if (!userSnap.exists()) {
+                    userData.accountCreated = serverTimestamp();
+                    userData.purchasedSeries = [];
+                    await setDoc(userDocRef, userData);
+                } else {
+                    await setDoc(userDocRef, userData, { merge: true });
+                }
+
+                // Success visual feedback
+                iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
+                mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
+                loaderText.innerText = "Verified! Moving to Dashboard...";
+
+                setTimeout(() => {
+                    handleNavigation(user.email);
+                }, 1200);
+
+            } catch (err) {
+                console.error("Popup Error:", err);
+                loginBtn.classList.remove('hidden');
+                loader.classList.add('hidden');
+                statusText.innerText = "Login Interrupted";
+                errorMsg.innerText = "Error: " + err.message;
+                errorMsg.classList.remove('hidden');
+            }
         };
 
-        async function handleAuthResult() {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result && result.user) {
-                    await checkUserStatusAndNavigate(result.user);
-                }
-            } catch (err) {
-                showError("Authentication failed. Please try again.");
-            }
-        }
-
-        async function checkUserStatusAndNavigate(user) {
-            loader.classList.remove('hidden');
-            loaderText.innerText = "Verifying Account Status...";
-            
-            const userDocRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userDocRef);
-
-            // Check if account is disabled
-            if (userSnap.exists() && userSnap.data().status === 'disabled') {
-                await signOut(auth);
-                showDisabledUI();
-                return;
-            }
-
-            // Update or Create user data
-            const userData = {
-                uid: user.uid,
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                lastLogin: serverTimestamp(),
-                status: userSnap.exists() ? (userSnap.data().status || 'active') : 'active'
-            };
-
-            if (!userSnap.exists()) {
-                userData.accountCreated = serverTimestamp();
-                userData.purchasedSeries = [];
-                await setDoc(userDocRef, userData);
+        function handleNavigation(email) {
+            if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                window.location.href = "admin.html";
             } else {
-                await setDoc(userDocRef, userData, { merge: true });
+                window.location.href = "home.html";
             }
-
-            // Success Transition
-            iconContainer.classList.replace('bg-blue-600', 'bg-green-500');
-            mainIcon.classList.replace('fa-graduation-cap', 'fa-check');
-            loaderText.innerText = "Authorized! Accessing Dashboard...";
-
-            setTimeout(() => {
-                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                    window.location.href = "admin.html";
-                } else {
-                    window.location.href = "home.html";
-                }
-            }, 1000);
         }
 
-        function showDisabledUI() {
-            loader.classList.add('hidden');
-            loginBtn.classList.add('hidden');
-            supportBtn.classList.remove('hidden');
-            
-            iconContainer.classList.replace('bg-blue-600', 'bg-red-500');
-            mainIcon.classList.replace('fa-graduation-cap', 'fa-user-slash');
-            
-            statusText.innerText = "Access Denied";
-            statusText.classList.replace('text-slate-400', 'text-red-500');
-            
-            errorMsg.innerText = "Your account has been suspended by the administrator. Please contact support to restore access.";
-            errorMsg.classList.remove('hidden');
-        }
-
-        function showError(msg) {
-            loader.classList.add('hidden');
-            loginBtn.classList.remove('hidden');
-            errorMsg.innerText = msg;
-            errorMsg.classList.remove('hidden');
-        }
-
-        // Initialize Redirect Check
-        handleAuthResult();
-
-        // Session Watcher
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userSnap = await getDoc(doc(db, "users", user.uid));
-                if (userSnap.exists() && userSnap.data().status === 'disabled') {
-                    await signOut(auth);
-                    showDisabledUI();
-                } else if (userSnap.exists()) {
-                    // Pre-authenticated, just move to destination
-                    if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                        window.location.href = "admin.html";
-                    } else {
-                        window.location.href = "home.html";
-                    }
+                if (userSnap.exists()) {
+                    handleNavigation(user.email);
                 }
             }
         });
     </script>
 </body>
 </html>
+
+```
